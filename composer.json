@@ -1,0 +1,16 @@
+{
+  "name": "umg/escuela-phalcon",
+  "description": "Sistema de alumnos y notas (Phalcon 5). Composer solo se usa para las pruebas.",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "ext-phalcon": "^5.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0",
+    "guzzlehttp/guzzle": "^7.8"
+  },
+  "autoload-dev": {
+    "psr-4": { "Tests\\": "tests/" }
+  }
+}

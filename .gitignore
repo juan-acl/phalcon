@@ -1,0 +1,11 @@
+/vendor/
+/.phpunit.cache/
+/app/config/config.local.php
+/var/cache/volt/*
+/var/log/*
+/public/uploads/*
+!/public/uploads/.htaccess
+!/public/uploads/.gitkeep
+!/var/cache/volt/.gitkeep
+!/var/log/.gitkeep
+.env

@@ -1,0 +1,5 @@
+# Nunca ejecutar código en la carpeta de fotos (Apache 2.4)
+<FilesMatch "\.(php|phtml|phar|php[0-9])$">
+    Require all denied
+</FilesMatch>
+Options -Indexes
