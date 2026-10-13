@@ -54,18 +54,25 @@ final class ReporteService
         return $this->db->fetchAll($sql, Enum::FETCH_ASSOC, $binds);
     }
 
-    /** Historial de notas de un alumno. */
-    public function historial(int $alumnoId): array
+    /** Historial de notas de un alumno; $soloPublicadas filtra notas en borrador (para el alumno). */
+    public function historial(int $alumnoId, bool $soloPublicadas = false): array
     {
-        $sql = 'SELECT n.id, sm.nombre AS semestre, cu.nombre AS curso, s.nombre AS seccion, n.nota,
+        $sql = 'SELECT n.id, n.estado, n.updated_at, sm.id AS semestre_id, sm.nombre AS semestre, sm.cerrado AS semestre_cerrado,
+                       cu.nombre AS curso, s.nombre AS seccion, n.nota,
                        (n.nota >= :aprob) AS aprobado
                   FROM notas n
                   JOIN cursos cu    ON cu.id = n.curso_id
                   JOIN secciones s  ON s.id  = n.seccion_id
                   JOIN semestres sm ON sm.id = n.semestre_id
-                 WHERE n.alumno_id = :alumno
-                 ORDER BY sm.id, cu.nombre';
+                 WHERE n.alumno_id = :alumno';
+        $binds = ['aprob' => $this->notaAprobacion, 'alumno' => $alumnoId];
 
-        return $this->db->fetchAll($sql, Enum::FETCH_ASSOC, ['aprob' => $this->notaAprobacion, 'alumno' => $alumnoId]);
+        if ($soloPublicadas) {
+            $sql .= " AND n.estado = 'publicada'";
+        }
+
+        $sql .= ' ORDER BY sm.id, cu.nombre';
+
+        return $this->db->fetchAll($sql, Enum::FETCH_ASSOC, $binds);
     }
 }

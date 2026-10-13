@@ -21,6 +21,8 @@ $router->addPost('/alumnos/{id:[0-9]+}/eliminar', ['controller' => 'alumnos', 'a
 $router->addGet('/notas/buscar', ['controller' => 'notas', 'action' => 'buscar']);
 $router->addGet('/alumnos/{id:[0-9]+}/notas/nueva', ['controller' => 'notas', 'action' => 'nueva']);
 $router->addPost('/alumnos/{id:[0-9]+}/notas/crear', ['controller' => 'notas', 'action' => 'crear']);
+$router->addGet('/notas/{id:[0-9]+}/editar', ['controller' => 'notas', 'action' => 'editar']);
+$router->addPost('/notas/{id:[0-9]+}/actualizar', ['controller' => 'notas', 'action' => 'actualizar']);
 $router->addPost('/notas/{id:[0-9]+}/eliminar', ['controller' => 'notas', 'action' => 'eliminar']);
 
 // ---- Catálogos (un solo controlador con lista blanca de tipos) ----

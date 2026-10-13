@@ -6,18 +6,24 @@
     <p class="text-muted small mb-0">Información personal e historial académico de notas</p>
   </div>
   <div class="d-flex gap-2">
-    <a href="{{ url('alumnos') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Volver
-    </a>
+    {% if auth is defined and auth['rol'] == 'director' %}
+      <a href="{{ url('alumnos') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+      </a>
+    {% endif %}
     <a href="{{ url('alumnos/' ~ alumno.id ~ '/ficha?formato=pdf') }}" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf me-1"></i>Descargar Ficha PDF
     </a>
-    <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva') }}" class="btn btn-success btn-sm">
-      <i class="bi bi-plus-circle me-1"></i>Ingresar Nota
-    </a>
-    <a href="{{ url('alumnos/' ~ alumno.id ~ '/editar') }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-pencil me-1"></i>Editar Datos
-    </a>
+    {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
+      <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Ingresar Nota
+      </a>
+    {% endif %}
+    {% if auth is defined and auth['rol'] == 'director' %}
+      <a href="{{ url('alumnos/' ~ alumno.id ~ '/editar') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-pencil me-1"></i>Editar Datos
+      </a>
+    {% endif %}
   </div>
 </div>
 
@@ -109,14 +115,30 @@
                 {% else %}
                   <span class="badge bg-danger-subtle text-danger border">Reprobado</span>
                 {% endif %}
+                {% if h['estado'] is defined and h['estado'] == 'borrador' %}
+                  <span class="badge bg-warning text-dark border ms-1">Borrador</span>
+                {% endif %}
+                {% if h['updated_at'] is defined and h['updated_at'] %}
+                  <span class="badge bg-info-subtle text-info border ms-1" title="Nota corregida con auditoría">Corregida</span>
+                {% endif %}
               </td>
               <td class="text-end pe-4">
-                <form action="{{ url('notas/' ~ h['id'] ~ '/eliminar') }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar esta nota?');">
-                  <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Nota">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </form>
+                {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
+                  <a href="{{ url('notas/' ~ h['id'] ~ '/editar') }}" class="btn btn-sm btn-outline-primary me-1" title="Editar Nota">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                {% endif %}
+                {% if auth is defined and auth['rol'] == 'director' %}
+                  <form action="{{ url('notas/' ~ h['id'] ~ '/eliminar') }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar esta nota?');">
+                    <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Nota">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
+                {% if auth is defined and auth['rol'] == 'alumno' %}
+                  <span class="text-muted">—</span>
+                {% endif %}
               </td>
             </tr>
           {% else %}

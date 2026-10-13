@@ -165,6 +165,11 @@ class AlumnosController extends BaseController
         }
 
         $id = (int) $this->dispatcher->getParam('id');
+        if ($this->esAlumno() && $id !== $this->alumnoId()) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
         $alumno = Alumno::findFirst([
             'conditions' => 'id = :id:',
             'bind'       => ['id' => $id],
@@ -176,7 +181,7 @@ class AlumnosController extends BaseController
         }
 
         $service = new ReporteService($this->db, (int) $this->config['app']['notaAprobacion']);
-        $historial = $service->historial($id);
+        $historial = $service->historial($id, $this->esAlumno());
 
         $this->view->setVar('alumno', $alumno);
         $this->view->setVar('historial', $historial);
@@ -187,6 +192,11 @@ class AlumnosController extends BaseController
     private function generarFichaPdf()
     {
         $id = (int) $this->dispatcher->getParam('id');
+        if ($this->esAlumno() && $id !== $this->alumnoId()) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
         $alumno = Alumno::findFirst([
             'conditions' => 'id = :id:',
             'bind'       => ['id' => $id],
@@ -199,7 +209,7 @@ class AlumnosController extends BaseController
 
         $umbral = (int) $this->config['app']['notaAprobacion'];
         $service = new ReporteService($this->db, $umbral);
-        $historial = $service->historial($id);
+        $historial = $service->historial($id, $this->esAlumno());
 
         $carrera = Carrera::findFirst($alumno->carrera_id);
         $total = count($historial);

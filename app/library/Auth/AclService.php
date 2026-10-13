@@ -51,7 +51,7 @@ class AclService
         $this->acl->allow('profesor', 'cuenta', 'clave');
         $this->acl->allow('profesor', 'reportes', ['alumnosporcarrera', 'notas']);
         $this->acl->allow('profesor', 'alumnos', ['ver', 'ficha']);
-        $this->acl->allow('profesor', 'notas', ['nueva', 'crear']);
+        $this->acl->allow('profesor', 'notas', ['nueva', 'crear', 'editar', 'actualizar']);
         $this->acl->allow('profesor', 'profesor', '*');
         $this->acl->allow('profesor', 'error', '*');
 
