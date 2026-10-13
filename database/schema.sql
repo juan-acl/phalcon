@@ -2,7 +2,12 @@
 -- Uso:  mysql -u root -p escuela < database/schema.sql
 -- ATENCIÓN: borra y recrea las tablas.
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS notas_auditoria;
 DROP TABLE IF EXISTS notas;
+DROP TABLE IF EXISTS inscripciones;
+DROP TABLE IF EXISTS clases;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS profesores;
 DROP TABLE IF EXISTS alumnos;
 DROP TABLE IF EXISTS semestres;
 DROP TABLE IF EXISTS secciones;
@@ -31,6 +36,15 @@ CREATE TABLE secciones (
 CREATE TABLE semestres (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL UNIQUE,
+  cerrado TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE profesores (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nombres VARCHAR(100) NOT NULL,
+  apellidos VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NULL UNIQUE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -45,6 +59,47 @@ CREATE TABLE alumnos (
   CONSTRAINT fk_alumnos_carrera FOREIGN KEY (carrera_id) REFERENCES carreras(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE usuarios (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  usuario VARCHAR(60) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  rol ENUM('director','profesor','alumno') NOT NULL,
+  alumno_id INT UNSIGNED NULL UNIQUE,
+  profesor_id INT UNSIGNED NULL UNIQUE,
+  activo TINYINT(1) NOT NULL DEFAULT 1,
+  debe_cambiar_clave TINYINT(1) NOT NULL DEFAULT 1,
+  intentos_fallidos INT UNSIGNED NOT NULL DEFAULT 0,
+  bloqueado_hasta DATETIME NULL,
+  ultimo_acceso DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_usuarios_alumno   FOREIGN KEY (alumno_id)   REFERENCES alumnos(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_usuarios_profesor FOREIGN KEY (profesor_id) REFERENCES profesores(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE clases (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  curso_id INT UNSIGNED NOT NULL,
+  seccion_id INT UNSIGNED NOT NULL,
+  semestre_id INT UNSIGNED NOT NULL,
+  profesor_id INT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_clase UNIQUE (curso_id, seccion_id, semestre_id),
+  CONSTRAINT fk_clases_curso    FOREIGN KEY (curso_id)    REFERENCES cursos(id)    ON DELETE RESTRICT,
+  CONSTRAINT fk_clases_seccion  FOREIGN KEY (seccion_id)  REFERENCES secciones(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_clases_semestre FOREIGN KEY (semestre_id) REFERENCES semestres(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_clases_profesor FOREIGN KEY (profesor_id) REFERENCES profesores(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inscripciones (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  alumno_id INT UNSIGNED NOT NULL,
+  clase_id INT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_inscripcion UNIQUE (alumno_id, clase_id),
+  CONSTRAINT fk_insc_alumno FOREIGN KEY (alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE,
+  CONSTRAINT fk_insc_clase  FOREIGN KEY (clase_id)  REFERENCES clases(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE notas (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   alumno_id INT UNSIGNED NOT NULL,
@@ -52,11 +107,34 @@ CREATE TABLE notas (
   semestre_id INT UNSIGNED NOT NULL,
   seccion_id INT UNSIGNED NOT NULL,
   nota DECIMAL(5,2) NOT NULL,
+  estado ENUM('borrador','publicada') NOT NULL DEFAULT 'publicada',
+  publicada_at DATETIME NULL,
+  updated_by INT UNSIGNED NULL,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_nota CHECK (nota >= 0 AND nota <= 100),
   CONSTRAINT uq_nota UNIQUE (alumno_id, curso_id, semestre_id),
-  CONSTRAINT fk_notas_alumno   FOREIGN KEY (alumno_id)   REFERENCES alumnos(id)   ON DELETE CASCADE,
-  CONSTRAINT fk_notas_curso    FOREIGN KEY (curso_id)    REFERENCES cursos(id)    ON DELETE RESTRICT,
-  CONSTRAINT fk_notas_semestre FOREIGN KEY (semestre_id) REFERENCES semestres(id) ON DELETE RESTRICT,
-  CONSTRAINT fk_notas_seccion  FOREIGN KEY (seccion_id)  REFERENCES secciones(id) ON DELETE RESTRICT
+  CONSTRAINT fk_notas_alumno     FOREIGN KEY (alumno_id)   REFERENCES alumnos(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_notas_curso      FOREIGN KEY (curso_id)    REFERENCES cursos(id)    ON DELETE RESTRICT,
+  CONSTRAINT fk_notas_semestre   FOREIGN KEY (semestre_id) REFERENCES semestres(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_notas_seccion    FOREIGN KEY (seccion_id)  REFERENCES secciones(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_notas_updated_by FOREIGN KEY (updated_by)  REFERENCES usuarios(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE notas_auditoria (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nota_id INT UNSIGNED NULL,
+  alumno_id INT UNSIGNED NOT NULL,
+  curso_id INT UNSIGNED NOT NULL,
+  semestre_id INT UNSIGNED NOT NULL,
+  seccion_id INT UNSIGNED NOT NULL,
+  accion ENUM('crear','editar','publicar','eliminar') NOT NULL,
+  nota_anterior DECIMAL(5,2) NULL,
+  nota_nueva DECIMAL(5,2) NULL,
+  motivo VARCHAR(255) NULL,
+  usuario_id INT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_aud_nota (nota_id),
+  INDEX idx_aud_alumno (alumno_id),
+  CONSTRAINT fk_aud_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

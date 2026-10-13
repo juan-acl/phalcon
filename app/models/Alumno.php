@@ -20,5 +20,12 @@ class Alumno extends Model
         $this->setSource('alumnos');
         $this->belongsTo('carrera_id', Carrera::class, 'id', ['alias' => 'carrera']);
         $this->hasMany('id', Nota::class, 'alumno_id', ['alias' => 'notas']);
+        $this->hasMany('id', Inscripcion::class, 'alumno_id', ['alias' => 'inscripciones']);
+        $this->hasOne('id', Usuario::class, 'alumno_id', ['alias' => 'usuario']);
+    }
+
+    public function getNombreCompleto(): string
+    {
+        return trim($this->nombres . ' ' . $this->apellidos);
     }
 }

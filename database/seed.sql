@@ -9,8 +9,12 @@ INSERT INTO cursos (nombre) VALUES
 
 INSERT INTO secciones (nombre) VALUES ('A'),('B'),('C');
 
-INSERT INTO semestres (nombre) VALUES
- ('Primer semestre 2025'),('Segundo semestre 2025'),('Primer semestre 2026');
+INSERT INTO semestres (nombre, cerrado) VALUES
+ ('Primer semestre 2025', 0),('Segundo semestre 2025', 0),('Primer semestre 2026', 0);
+
+INSERT INTO profesores (nombres, apellidos, email) VALUES
+ ('Carlos Eduardo', 'Mendoza Soto', 'carlos.mendoza@escuela.edu'),
+ ('Laura Patricia', 'García Ruiz', 'laura.garcia@escuela.edu');
 
 INSERT INTO alumnos (nombres, apellidos, fecha_nacimiento, carrera_id) VALUES
  ('Ana María','Pérez López','2008-05-14',1),
@@ -25,6 +29,15 @@ INSERT INTO alumnos (nombres, apellidos, fecha_nacimiento, carrera_id) VALUES
  ('Kevin Estuardo','Salazar Reyes','2007-10-19',1);
 
 -- 4 cursos aprobados por alumno (notas entre 61 y 100), determinístico
-INSERT INTO notas (alumno_id, curso_id, semestre_id, seccion_id, nota)
-SELECT a.id, c.id, 1, 1 + MOD(a.id, 3), 61 + MOD(a.id * 17 + c.id * 29, 40)
+INSERT INTO notas (alumno_id, curso_id, semestre_id, seccion_id, nota, estado, publicada_at)
+SELECT a.id, c.id, 1, 1 + MOD(a.id, 3), 61 + MOD(a.id * 17 + c.id * 29, 40), 'publicada', NOW()
 FROM alumnos a JOIN cursos c ON c.id <= 4;
+
+-- Generar clases e inscripciones a partir de las notas
+INSERT IGNORE INTO clases (curso_id, seccion_id, semestre_id, profesor_id)
+SELECT DISTINCT curso_id, seccion_id, semestre_id, 1 + MOD(curso_id, 2) FROM notas;
+
+INSERT IGNORE INTO inscripciones (alumno_id, clase_id)
+SELECT DISTINCT n.alumno_id, c.id
+  FROM notas n
+  JOIN clases c ON c.curso_id = n.curso_id AND c.seccion_id = n.seccion_id AND c.semestre_id = n.semestre_id;

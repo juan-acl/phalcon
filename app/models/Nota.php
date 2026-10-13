@@ -12,6 +12,9 @@ class Nota extends Model
     public $semestre_id;
     public $seccion_id;
     public $nota;
+    public $estado;
+    public $publicada_at;
+    public $updated_by;
     public $created_at;
     public $updated_at;
 
@@ -22,5 +25,16 @@ class Nota extends Model
         $this->belongsTo('curso_id', Curso::class, 'id', ['alias' => 'curso']);
         $this->belongsTo('semestre_id', Semestre::class, 'id', ['alias' => 'semestre']);
         $this->belongsTo('seccion_id', Seccion::class, 'id', ['alias' => 'seccion']);
+        $this->belongsTo('updated_by', Usuario::class, 'id', ['alias' => 'modificadoPor']);
+    }
+
+    public function esBorrador(): bool
+    {
+        return $this->estado === 'borrador';
+    }
+
+    public function esPublicada(): bool
+    {
+        return $this->estado === 'publicada';
     }
 }

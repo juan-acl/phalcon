@@ -341,6 +341,9 @@ class AtaquesTest extends HttpTestCase
         $atacante = $this->nuevoCliente();
         $victima = $this->nuevoCliente();
 
+        $this->loguearCliente($atacante, 'director');
+        $this->loguearCliente($victima, 'director');
+
         $tokenAtacante = $this->ocultos($atacante, '/catalogos/carreras/nuevo');
         $this->ocultos($victima, '/catalogos/carreras/nuevo'); // la víctima tiene su propia sesión
 
@@ -364,7 +367,8 @@ class AtaquesTest extends HttpTestCase
 
     public function test_cookie_de_sesion_tiene_samesite(): void
     {
-        $set = $this->get('/alumnos/nuevo')->getHeaderLine('Set-Cookie');
+        $cliente = $this->nuevoCliente();
+        $set = $cliente->get('/alumnos/nuevo')->getHeaderLine('Set-Cookie');
         $this->assertStringContainsStringIgnoringCase('HttpOnly', $set);
         $this->assertMatchesRegularExpression('/SameSite=(Lax|Strict)/i', $set);
     }

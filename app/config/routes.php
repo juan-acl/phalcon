@@ -35,3 +35,10 @@ $router->addPost("/catalogos/$tipos/{id:[0-9]+}/eliminar", ['controller' => 'cat
 // ---- Reportes ----
 $router->addGet('/reportes/alumnos-por-carrera', ['controller' => 'reportes', 'action' => 'alumnosPorCarrera']);
 $router->addGet('/reportes/notas', ['controller' => 'reportes', 'action' => 'notas']);
+
+// ---- Autenticación y Cuenta ----
+$router->addGet('/login', ['controller' => 'auth', 'action' => 'login']);
+$router->addPost('/login', ['controller' => 'auth', 'action' => 'login']);
+$router->addPost('/logout', ['controller' => 'auth', 'action' => 'logout']);
+$router->addGet('/cuenta/clave', ['controller' => 'cuenta', 'action' => 'clave']);
+$router->addPost('/cuenta/clave', ['controller' => 'cuenta', 'action' => 'clave']);

@@ -60,6 +60,16 @@ abstract class HttpTestCase extends TestCase
             $this->fail('El servidor de pruebas no responde. Inícialo (ver docs/07-PRUEBAS.md): '
                 . 'APP_ENV=testing php -S 127.0.0.1:8081 -t public public/router.php');
         }
+
+        // Crear usuario director por defecto e iniciar sesión en el cliente principal
+        $this->insertar('usuarios', [
+            'usuario'            => 'director',
+            'password_hash'      => password_hash('Director123!', PASSWORD_DEFAULT),
+            'rol'                => 'director',
+            'activo'             => 1,
+            'debe_cambiar_clave' => 0,
+        ]);
+        $this->loginComo('director');
     }
 
     protected function tearDown(): void
@@ -119,17 +129,23 @@ abstract class HttpTestCase extends TestCase
      *
      * @param array $archivos ['campo' => ['ruta' => ..., 'nombre' => ..., 'tipo' => ...]]
      */
-    protected function submit(string $paginaFormulario, array $campos, array $archivos = [], ?string $accion = null): ResponseInterface
+    protected function submit(string $paginaFormulario, array $campos, array $archivos = [], ?string $accion = null, ?Client $cliente = null): ResponseInterface
     {
-        $pagina = $this->http->get($paginaFormulario);
+        $cliente ??= $this->http;
+        $pagina = $cliente->get($paginaFormulario);
         $this->assertSame(200, $pagina->getStatusCode(), "No se pudo abrir el formulario {$paginaFormulario}");
 
         $dom = new DOMDocument();
         @$dom->loadHTML('<?xml encoding="UTF-8">' . $this->cuerpo($pagina));
         $xp = new DOMXPath($dom);
 
+        $forms = $xp->query("//main//form[translate(@method,'POST','post')='post']");
+        if ($forms->length === 0) {
+            $forms = $xp->query("//form[translate(@method,'POST','post')='post']");
+        }
+
         $form = null;
-        foreach ($xp->query("//form[translate(@method,'POST','post')='post']") as $f) {
+        foreach ($forms as $f) {
             if ($accion === null || str_ends_with($f->getAttribute('action'), $accion)) {
                 $form = $f;
                 break;
@@ -155,7 +171,81 @@ abstract class HttpTestCase extends TestCase
             ];
         }
 
-        return $this->http->post($form->getAttribute('action') ?: $paginaFormulario, ['multipart' => $partes]);
+        return $cliente->post($form->getAttribute('action') ?: $paginaFormulario, ['multipart' => $partes]);
+    }
+
+    /**
+     * Inicia sesión con el cliente HTTP especificado.
+     */
+    protected function loguearCliente(Client $cliente, string $rol = 'director', array $extra = []): void
+    {
+        if ($rol === 'director') {
+            $this->submit('/login', ['usuario' => 'director', 'password' => 'Director123!'], [], null, $cliente);
+        } elseif ($rol === 'profesor') {
+            $u = $extra['usuario'] ?? 'profesor1';
+            $p = $extra['password'] ?? 'Profesor123!';
+            $this->submit('/login', ['usuario' => $u, 'password' => $p], [], null, $cliente);
+        } elseif ($rol === 'alumno') {
+            $u = $extra['usuario'] ?? 'alumno1';
+            $p = $extra['password'] ?? 'Alumno123!';
+            $this->submit('/login', ['usuario' => $u, 'password' => $p], [], null, $cliente);
+        }
+    }
+
+    /**
+     * Configura la sesión actual de $this->http según el rol solicitado.
+     */
+    protected function loginComo(string $rol = 'director', array $extra = []): void
+    {
+        $this->http = new Client([
+            'base_uri'        => getenv('TEST_BASE_URL') ?: 'http://127.0.0.1:8081',
+            'cookies'         => new CookieJar(),
+            'http_errors'     => false,
+            'allow_redirects' => false,
+            'timeout'         => 15,
+        ]);
+
+        if ($rol === 'invitado') {
+            return;
+        }
+
+        if ($rol === 'profesor' && empty($extra['usuario'])) {
+            $profesorId = $extra['profesor_id'] ?? $this->insertar('profesores', [
+                'nombres'   => 'Profesor',
+                'apellidos' => 'Prueba',
+                'email'     => 'prof_' . bin2hex(random_bytes(3)) . '@escuela.edu',
+            ]);
+            $u = 'prof_' . bin2hex(random_bytes(3));
+            $p = 'Profesor123!';
+            $this->insertar('usuarios', [
+                'usuario'            => $u,
+                'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
+                'rol'                => 'profesor',
+                'profesor_id'        => $profesorId,
+                'activo'             => 1,
+                'debe_cambiar_clave' => 0,
+            ]);
+            $extra['usuario'] = $u;
+            $extra['password'] = $p;
+            $extra['profesor_id'] = $profesorId;
+        } elseif ($rol === 'alumno' && empty($extra['usuario'])) {
+            $alumnoId = $extra['alumno_id'] ?? $this->crearAlumno('Alumno', 'Prueba');
+            $u = 'alum_' . bin2hex(random_bytes(3));
+            $p = 'Alumno123!';
+            $this->insertar('usuarios', [
+                'usuario'            => $u,
+                'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
+                'rol'                => 'alumno',
+                'alumno_id'          => $alumnoId,
+                'activo'             => 1,
+                'debe_cambiar_clave' => 0,
+            ]);
+            $extra['usuario'] = $u;
+            $extra['password'] = $p;
+            $extra['alumno_id'] = $alumnoId;
+        }
+
+        $this->loguearCliente($this->http, $rol, $extra);
     }
 
     // ---------- Archivos ----------

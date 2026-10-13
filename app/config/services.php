@@ -74,6 +74,11 @@ $di->setShared('exportService', function () {
     return new \App\Library\Reportes\ExportService();
 });
 
+// ---- Servicio de control de acceso (ACL) ----
+$di->setShared('aclService', function () {
+    return new \App\Library\Auth\AclService();
+});
+
 // ---- Base de datos (MySQL/MariaDB) ----
 $di->setShared('db', function () use ($config) {
     $db = new Mysql($config['db']);
