@@ -28,7 +28,15 @@ Nota: el proyecto empezó en Laravel y se cambió a Phalcon por indicación del 
 9. Si la validación falla: volver a mostrar el formulario con `conErrores()` (HTTP 422) y no guardar. Si todo sale bien: redirigir (302) con mensaje flash.
 10. El esquema vive en database/schema.sql y los datos de demo en database/seed.sql. Cualquier cambio de BD se hace ahí (y se documenta en docs/03). `php cli/reset_db.php` debe dejar el sistema listo.
 11. Umbral de aprobación: 61 (config `app.notaAprobacion`); no escribir el número suelto en el código.
-12. No agregar dependencias de Composer a la app (Composer solo para pruebas). No usar otros frameworks ni ORM.
+12. Dependencias de Composer: se permite **solo** `dompdf/dompdf` como dependencia de ejecución (para exportar reportes a PDF). Composer sigue siendo para pruebas/desarrollo de lo demás.
 13. Al terminar una tarea: marcarla en docs/04-TAREAS.md y anotar en docs/05-ENTREGA-PDF.md pasos/dificultades relevantes (sirven para el PDF).
 14. Antes de dar algo por terminado: `php cli/reset_db.php`, correr `bash scripts/auditoria.sh` y las pruebas (docs/07), y probar el flujo en el navegador.
 15. Si no estás seguro de una API de Phalcon, consultar https://docs.phalcon.io (versión 5.x) en lugar de inventarla.
+16. Roles (`director`, `profesor`, `alumno`): autenticación por sesión (`usuarios`).
+17. Todo acceso a un registro se filtra por pertenencia del usuario de la sesión; nunca se busca solo por id. Sin pertenencia → responder 404.
+18. El `alumno_id`/`profesor_id` del usuario sale de la sesión del servidor, jamás de la petición.
+19. Toda corrección de una nota publicada exige motivo, se hace en transacción y deja registro en `notas_auditoria`.
+20. Los exportes usan la misma consulta y los mismos permisos que la pantalla; `formato` solo acepta `pdf` o `csv`; dompdf con `isRemoteEnabled=false` y `isPhpEnabled=false`; nombres de archivo generados por el servidor; celdas CSV protegidas contra fórmulas; tope de filas.
+21. Claves con `password_hash`; nunca contraseñas en `seed.sql` ni en el repositorio.
+22. Cada etapa termina con `php cli/reset_db.php`, `bash scripts/auditoria.sh` y `vendor\bin\phpunit` en verde antes de pasar a la siguiente.
+

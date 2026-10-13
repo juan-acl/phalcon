@@ -9,6 +9,9 @@
     <a href="{{ url('alumnos') }}" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-arrow-left me-1"></i>Volver
     </a>
+    <a href="{{ url('alumnos/' ~ alumno.id ~ '/ficha?formato=pdf') }}" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Descargar Ficha PDF
+    </a>
     <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva') }}" class="btn btn-success btn-sm">
       <i class="bi bi-plus-circle me-1"></i>Ingresar Nota
     </a>

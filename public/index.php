@@ -29,6 +29,10 @@ ini_set('display_errors', $config['app']['debug'] ? '1' : '0');
 try {
     $di = new FactoryDefault();
 
+    if (is_file(BASE_PATH . '/vendor/autoload.php')) {
+        require_once BASE_PATH . '/vendor/autoload.php';
+    }
+
     require APP_PATH . '/config/loader.php';
     require APP_PATH . '/config/services.php';
 

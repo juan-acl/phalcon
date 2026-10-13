@@ -5,9 +5,17 @@
     </h2>
     <p class="text-muted small mb-0">Filtro de notas por carrera, curso y sección</p>
   </div>
-  <span class="badge bg-light text-dark border">
-    Umbral de aprobación: {{ umbral|e }} pts
-  </span>
+  <div class="d-flex align-items-center gap-2">
+    <span class="badge bg-light text-dark border me-1">
+      Umbral: {{ umbral|e }} pts
+    </span>
+    <a href="{{ url('reportes/notas') }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&formato=pdf" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+    </a>
+    <a href="{{ url('reportes/notas') }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&formato=csv" class="btn btn-outline-success btn-sm shadow-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Descargar CSV
+    </a>
+  </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4">

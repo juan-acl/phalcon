@@ -5,6 +5,14 @@
     </h2>
     <p class="text-muted small mb-0">Listado consolidado de estudiantes matriculados</p>
   </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url('reportes/alumnos-por-carrera') }}?carrera_id={{ carreraId|default('')|e }}&formato=pdf" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+    </a>
+    <a href="{{ url('reportes/alumnos-por-carrera') }}?carrera_id={{ carreraId|default('')|e }}&formato=csv" class="btn btn-outline-success btn-sm shadow-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Descargar CSV
+    </a>
+  </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4">

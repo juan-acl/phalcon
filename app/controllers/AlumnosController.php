@@ -140,8 +140,30 @@ class AlumnosController extends BaseController
         return $this->irA('alumnos');
     }
 
-    public function verAction(): void
+    public function fichaAction()
     {
+        $formatoRaw = $this->request->getQuery('formato');
+        if ($formatoRaw !== null) {
+            if (!is_string($formatoRaw) || strtolower($formatoRaw) !== 'pdf') {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
+        }
+
+        return $this->generarFichaPdf();
+    }
+
+    public function verAction()
+    {
+        $formatoRaw = $this->request->getQuery('formato');
+        if ($formatoRaw !== null) {
+            if (!is_string($formatoRaw) || strtolower($formatoRaw) !== 'pdf') {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
+            return $this->generarFichaPdf();
+        }
+
         $id = (int) $this->dispatcher->getParam('id');
         $alumno = Alumno::findFirst([
             'conditions' => 'id = :id:',
@@ -160,6 +182,49 @@ class AlumnosController extends BaseController
         $this->view->setVar('historial', $historial);
         $this->view->setVar('umbral', (int) $this->config['app']['notaAprobacion']);
         $this->view->pick('alumnos/ver');
+    }
+
+    private function generarFichaPdf()
+    {
+        $id = (int) $this->dispatcher->getParam('id');
+        $alumno = Alumno::findFirst([
+            'conditions' => 'id = :id:',
+            'bind'       => ['id' => $id],
+        ]);
+
+        if (!$alumno) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $umbral = (int) $this->config['app']['notaAprobacion'];
+        $service = new ReporteService($this->db, $umbral);
+        $historial = $service->historial($id);
+
+        $carrera = Carrera::findFirst($alumno->carrera_id);
+        $total = count($historial);
+        $totalAprobados = count(array_filter($historial, fn($h) => !empty($h['aprobado'])));
+        $totalReprobados = $total - $totalAprobados;
+        $promedio = $total > 0 ? number_format(array_sum(array_column($historial, 'nota')) / $total, 2) : '0.00';
+
+        $fotoPath = '';
+        if (!empty($alumno->foto) && is_file(BASE_PATH . '/public/' . $alumno->foto)) {
+            $fotoPath = BASE_PATH . '/public/' . $alumno->foto;
+        }
+
+        $html = $this->simpleView->render('reportes/pdf/ficha-alumno', [
+            'alumno'          => $alumno,
+            'carreraNombre'   => $carrera ? $carrera->nombre : 'Sin carrera asignada',
+            'fotoPath'        => $fotoPath,
+            'historial'       => $historial,
+            'umbral'          => $umbral,
+            'totalAprobados'  => $totalAprobados,
+            'totalReprobados' => $totalReprobados,
+            'promedio'        => $promedio,
+            'fechaHora'       => date('d/m/Y H:i'),
+        ]);
+
+        return $this->exportService->pdf($html, 'ficha-alumno-' . $alumno->id, 'portrait');
     }
 
     public function editarAction(): void

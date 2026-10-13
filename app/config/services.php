@@ -60,6 +60,20 @@ $di->setShared('view', function () {
     return $view;
 });
 
+// ---- Vista simple para renderizado de plantillas a texto/HTML (ej. PDFs) ----
+$di->setShared('simpleView', function () use ($di) {
+    $simple = new \Phalcon\Mvc\View\Simple();
+    $simple->setDI($di);
+    $simple->setViewsDir(APP_PATH . '/views/');
+    $simple->registerEngines(['.volt' => 'voltService']);
+    return $simple;
+});
+
+// ---- Servicio de exportación de reportes (PDF y CSV) ----
+$di->setShared('exportService', function () {
+    return new \App\Library\Reportes\ExportService();
+});
+
 // ---- Base de datos (MySQL/MariaDB) ----
 $di->setShared('db', function () use ($config) {
     $db = new Mysql($config['db']);
