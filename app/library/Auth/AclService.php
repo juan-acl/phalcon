@@ -26,11 +26,16 @@ class AclService
             'cuenta'    => ['clave'],
             'alumnos'   => ['index', 'nuevo', 'crear', 'ver', 'ficha', 'editar', 'actualizar', 'eliminar'],
             'notas'     => ['buscar', 'nueva', 'crear', 'editar', 'actualizar', 'eliminar'],
-            'catalogos' => ['index', 'nuevo', 'crear', 'editar', 'actualizar', 'eliminar'],
-            'reportes'  => ['alumnosporcarrera', 'notas'],
-            'error'     => ['notfound', 'servererror', 'unauthorized', 'forbidden'],
-            'profesor'  => ['index', 'clases', 'clase', 'notas', 'guardarnota', 'publicar'],
-            'alumno'    => ['index', 'mificha', 'misnotas', 'descargarficha'],
+            'catalogos' => ['index', 'nuevo', 'crear', 'editar', 'actualizar', 'eliminar', 'cerrar', 'reabrir'],
+            'reportes'      => ['alumnosporcarrera', 'notas'],
+            'error'         => ['notfound', 'servererror', 'unauthorized', 'forbidden'],
+            'profesor'      => ['index', 'clases', 'clase', 'notas', 'guardarnota', 'publicar'],
+            'alumno'        => ['index', 'mificha', 'misnotas', 'descargarficha', 'perfil', 'notas'],
+            'tablero'       => ['index'],
+            'profesores'    => ['index', 'nuevo', 'crear', 'editar', 'actualizar', 'eliminar'],
+            'clases'        => ['index', 'nueva', 'crear', 'editar', 'actualizar', 'eliminar'],
+            'inscripciones' => ['index', 'nueva', 'crear', 'eliminar'],
+            'auditoria'     => ['index'],
         ];
 
         foreach ($recursos as $componente => $acciones) {

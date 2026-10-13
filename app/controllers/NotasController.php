@@ -211,6 +211,16 @@ class NotasController extends BaseController
             return;
         }
 
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeEditarNota($profId, $id)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
+        }
+
         // Si el semestre está cerrado y no es director: error de acceso
         if ($nota->semestre->cerrado && !$this->esDirector()) {
             $this->flashSession->error('El semestre se encuentra cerrado. Solo la Dirección puede modificar notas.');
@@ -250,6 +260,16 @@ class NotasController extends BaseController
         if (!$nota) {
             $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
             return;
+        }
+
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeEditarNota($profId, $id)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
         }
 
         if ($nota->semestre->cerrado && !$this->esDirector()) {

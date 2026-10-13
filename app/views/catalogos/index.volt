@@ -5,7 +5,7 @@
     </h2>
     <p class="text-muted small mb-0">{{ meta['descripcion']|e }}</p>
   </div>
-  <a href="{{ url('catalogos/' ~ tipo ~ '/nuevo') }}" class="btn btn-primary">
+  <a href="{{ url('catalogos/' ~ tipo ~ '/nuevo')|e }}" class="btn btn-primary">
     <i class="bi bi-plus-lg me-1"></i>Nueva {{ meta['singular']|e }}
   </a>
 </div>
@@ -19,14 +19,23 @@
             <th style="width: 80px;" class="text-center">#</th>
             <th>{{ meta['campo']|e }}</th>
             <th class="text-center" style="width: 200px;">{{ meta['etiquetaRelacion']|e }}</th>
-            <th class="text-end pe-4" style="width: 180px;">Acciones</th>
+            <th class="text-end pe-4" style="width: 220px;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for item in items %}
             <tr>
               <td class="text-center text-muted fw-semibold">{{ item['id']|e }}</td>
-              <td class="fw-semibold text-dark">{{ item['nombre']|e }}</td>
+              <td class="fw-semibold text-dark">
+                {{ item['nombre']|e }}
+                {% if tipo == 'semestres' %}
+                  {% if item['cerrado'] %}
+                    <span class="badge bg-danger ms-2"><i class="bi bi-lock-fill me-1"></i>Cerrado</span>
+                  {% else %}
+                    <span class="badge bg-success ms-2"><i class="bi bi-unlock-fill me-1"></i>Abierto</span>
+                  {% endif %}
+                {% endif %}
+              </td>
               <td class="text-center">
                 <span class="badge bg-secondary-subtle text-secondary border">
                   {{ item['conteo']|e }} {{ meta['relacionTexto']|e }}
@@ -34,11 +43,28 @@
               </td>
               <td class="text-end pe-4">
                 <div class="btn-group" role="group">
-                  <a href="{{ url('catalogos/' ~ tipo ~ '/' ~ item['id'] ~ '/editar') }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                  {% if tipo == 'semestres' %}
+                    {% if item['cerrado'] %}
+                      <form action="{{ url('catalogos/semestres/' ~ item['id'] ~ '/reabrir')|e }}" method="post" class="d-inline" onsubmit="return confirm('¿Reabrir este semestre?');">
+                        <input type="hidden" name="{{ security.getTokenKey()|e }}" value="{{ security.getToken()|e }}">
+                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Reabrir semestre">
+                          <i class="bi bi-unlock"></i> Reabrir
+                        </button>
+                      </form>
+                    {% else %}
+                      <form action="{{ url('catalogos/semestres/' ~ item['id'] ~ '/cerrar')|e }}" method="post" class="d-inline" onsubmit="return confirm('¿Cerrar este semestre? Los profesores no podrán modificar notas.');">
+                        <input type="hidden" name="{{ security.getTokenKey()|e }}" value="{{ security.getToken()|e }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Cerrar semestre">
+                          <i class="bi bi-lock"></i> Cerrar
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                  <a href="{{ url('catalogos/' ~ tipo ~ '/' ~ item['id'] ~ '/editar')|e }}" class="btn btn-sm btn-outline-primary" title="Editar">
                     <i class="bi bi-pencil"></i>
                   </a>
-                  <form action="{{ url('catalogos/' ~ tipo ~ '/' ~ item['id'] ~ '/eliminar') }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este registro?');">
-                    <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}">
+                  <form action="{{ url('catalogos/' ~ tipo ~ '/' ~ item['id'] ~ '/eliminar')|e }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este registro?');">
+                    <input type="hidden" name="{{ security.getTokenKey()|e }}" value="{{ security.getToken()|e }}">
                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
                       <i class="bi bi-trash"></i>
                     </button>

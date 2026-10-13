@@ -137,7 +137,23 @@ class EdicionNotasTest extends HttpTestCase
         $this->assertEquals(80, $notaDb);
 
         // 2. Profesor intenta abrir edición de nota en semestre cerrado -> redirigido con error
-        $this->loginComo('profesor');
+        $profId = $this->insertar('profesores', [
+            'nombres'   => 'Profesor',
+            'apellidos' => 'Semestre',
+            'email'     => 'prof_sem_' . bin2hex(random_bytes(3)) . '@escuela.edu',
+        ]);
+        $claseId = $this->insertar('clases', [
+            'curso_id'    => $info['curso_id'],
+            'seccion_id'  => $info['seccion_id'],
+            'semestre_id' => $info['semestre_id'],
+            'profesor_id' => $profId,
+        ]);
+        $this->insertar('inscripciones', [
+            'clase_id'  => $claseId,
+            'alumno_id' => $info['alumno_id'],
+        ]);
+
+        $this->loginComo('profesor', ['profesor_id' => $profId]);
         $r = $this->get("/notas/{$info['nota_id']}/editar");
         $this->assertSame(302, $r->getStatusCode());
         $this->assertStringContainsString("alumnos/{$info['alumno_id']}", $r->getHeaderLine('Location'));

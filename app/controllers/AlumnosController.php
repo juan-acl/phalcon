@@ -170,6 +170,16 @@ class AlumnosController extends BaseController
             return;
         }
 
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeVerAlumno($profId, $id)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
+        }
+
         $alumno = Alumno::findFirst([
             'conditions' => 'id = :id:',
             'bind'       => ['id' => $id],
@@ -195,6 +205,16 @@ class AlumnosController extends BaseController
         if ($this->esAlumno() && $id !== $this->alumnoId()) {
             $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
             return;
+        }
+
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeVerAlumno($profId, $id)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
         }
 
         $alumno = Alumno::findFirst([

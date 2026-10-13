@@ -108,9 +108,10 @@ class CatalogosController extends BaseController
             };
 
             $items[] = [
-                'id'     => (int) $reg->id,
-                'nombre' => (string) $reg->nombre,
-                'conteo' => (int) $conteo,
+                'id'      => (int) $reg->id,
+                'nombre'  => (string) $reg->nombre,
+                'conteo'  => (int) $conteo,
+                'cerrado' => $tipo === 'semestres' ? (bool) $reg->cerrado : false,
             ];
         }
 
@@ -346,4 +347,65 @@ class CatalogosController extends BaseController
 
         return $this->irA("catalogos/{$tipo}");
     }
+
+    public function cerrarAction()
+    {
+        $tipo = $this->getTipo();
+        if ($tipo !== 'semestres') {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $id = (int) $this->dispatcher->getParam('id');
+        /** @var Semestre|null $semestre */
+        $semestre = Semestre::findFirst([
+            'conditions' => 'id = :id:',
+            'bind'       => ['id' => $id],
+        ]);
+
+        if (!$semestre) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $semestre->cerrado = 1;
+        if ($semestre->save()) {
+            $this->flashSession->success("El semestre '{$semestre->nombre}' ha sido cerrado. Solo la Dirección podrá modificar notas de este periodo.");
+        } else {
+            $this->flashSession->error("No se pudo cerrar el semestre.");
+        }
+
+        return $this->irA("catalogos/semestres");
+    }
+
+    public function reabrirAction()
+    {
+        $tipo = $this->getTipo();
+        if ($tipo !== 'semestres') {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $id = (int) $this->dispatcher->getParam('id');
+        /** @var Semestre|null $semestre */
+        $semestre = Semestre::findFirst([
+            'conditions' => 'id = :id:',
+            'bind'       => ['id' => $id],
+        ]);
+
+        if (!$semestre) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $semestre->cerrado = 0;
+        if ($semestre->save()) {
+            $this->flashSession->success("El semestre '{$semestre->nombre}' ha sido reabierto.");
+        } else {
+            $this->flashSession->error("No se pudo reabrir el semestre.");
+        }
+
+        return $this->irA("catalogos/semestres");
+    }
 }
+

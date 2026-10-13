@@ -102,6 +102,21 @@ abstract class HttpTestCase extends TestCase
         return (int) $this->pdo->query("SELECT COUNT(*) FROM `$tabla`")->fetchColumn();
     }
 
+    protected function assertDatabaseHas(string $tabla, array $criterios): void
+    {
+        $where = [];
+        $vals = [];
+        foreach ($criterios as $col => $val) {
+            $where[] = "`$col` = ?";
+            $vals[] = $val;
+        }
+        $sql = "SELECT COUNT(*) FROM `$tabla` WHERE " . implode(' AND ', $where);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($vals);
+        $count = (int) $stmt->fetchColumn();
+        $this->assertGreaterThan(0, $count, "No se encontró ningún registro en '$tabla' que coincida con los criterios: " . json_encode($criterios));
+    }
+
     protected function crearAlumno(string $nombres, string $apellidos = 'Prueba', ?int $carreraId = null): int
     {
         $carreraId ??= $this->insertar('carreras', ['nombre' => 'Carrera ' . bin2hex(random_bytes(3))]);
@@ -210,39 +225,59 @@ abstract class HttpTestCase extends TestCase
         }
 
         if ($rol === 'profesor' && empty($extra['usuario'])) {
-            $profesorId = $extra['profesor_id'] ?? $this->insertar('profesores', [
-                'nombres'   => 'Profesor',
-                'apellidos' => 'Prueba',
-                'email'     => 'prof_' . bin2hex(random_bytes(3)) . '@escuela.edu',
-            ]);
-            $u = 'prof_' . bin2hex(random_bytes(3));
-            $p = 'Profesor123!';
-            $this->insertar('usuarios', [
-                'usuario'            => $u,
-                'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
-                'rol'                => 'profesor',
-                'profesor_id'        => $profesorId,
-                'activo'             => 1,
-                'debe_cambiar_clave' => 0,
-            ]);
-            $extra['usuario'] = $u;
-            $extra['password'] = $p;
-            $extra['profesor_id'] = $profesorId;
+            $profesorId = $extra['profesor_id'] ?? null;
+            if ($profesorId) {
+                $existente = $this->pdo->query("SELECT usuario FROM usuarios WHERE profesor_id = " . (int) $profesorId)->fetchColumn();
+                if ($existente) {
+                    $extra['usuario'] = $existente;
+                    $extra['password'] = 'Profesor123!';
+                }
+            }
+            if (empty($extra['usuario'])) {
+                $profesorId ??= $this->insertar('profesores', [
+                    'nombres'   => 'Profesor',
+                    'apellidos' => 'Prueba',
+                    'email'     => 'prof_' . bin2hex(random_bytes(3)) . '@escuela.edu',
+                ]);
+                $u = 'prof_' . bin2hex(random_bytes(3));
+                $p = 'Profesor123!';
+                $this->insertar('usuarios', [
+                    'usuario'            => $u,
+                    'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
+                    'rol'                => 'profesor',
+                    'profesor_id'        => $profesorId,
+                    'activo'             => 1,
+                    'debe_cambiar_clave' => 0,
+                ]);
+                $extra['usuario'] = $u;
+                $extra['password'] = $p;
+                $extra['profesor_id'] = $profesorId;
+            }
         } elseif ($rol === 'alumno' && empty($extra['usuario'])) {
-            $alumnoId = $extra['alumno_id'] ?? $this->crearAlumno('Alumno', 'Prueba');
-            $u = 'alum_' . bin2hex(random_bytes(3));
-            $p = 'Alumno123!';
-            $this->insertar('usuarios', [
-                'usuario'            => $u,
-                'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
-                'rol'                => 'alumno',
-                'alumno_id'          => $alumnoId,
-                'activo'             => 1,
-                'debe_cambiar_clave' => 0,
-            ]);
-            $extra['usuario'] = $u;
-            $extra['password'] = $p;
-            $extra['alumno_id'] = $alumnoId;
+            $alumnoId = $extra['alumno_id'] ?? null;
+            if ($alumnoId) {
+                $existente = $this->pdo->query("SELECT usuario FROM usuarios WHERE alumno_id = " . (int) $alumnoId)->fetchColumn();
+                if ($existente) {
+                    $extra['usuario'] = $existente;
+                    $extra['password'] = 'Alumno123!';
+                }
+            }
+            if (empty($extra['usuario'])) {
+                $alumnoId ??= $this->crearAlumno('Alumno', 'Prueba');
+                $u = 'alum_' . bin2hex(random_bytes(3));
+                $p = 'Alumno123!';
+                $this->insertar('usuarios', [
+                    'usuario'            => $u,
+                    'password_hash'      => password_hash($p, PASSWORD_DEFAULT),
+                    'rol'                => 'alumno',
+                    'alumno_id'          => $alumnoId,
+                    'activo'             => 1,
+                    'debe_cambiar_clave' => 0,
+                ]);
+                $extra['usuario'] = $u;
+                $extra['password'] = $p;
+                $extra['alumno_id'] = $alumnoId;
+            }
         }
 
         $this->loguearCliente($this->http, $rol, $extra);

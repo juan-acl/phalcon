@@ -516,4 +516,57 @@ class AtaquesTest extends HttpTestCase
         $this->assertLessThan(30, $seg, 'Una ráfaga de 60 peticiones tardó demasiado');
         $this->assertSame(200, $this->get('/')->getStatusCode(), 'El sistema no respondió después de la ráfaga');
     }
+
+    // =====================================================================
+    // G. Control de acceso y prevención de escalación de roles (RBAC / IDOR)
+    // =====================================================================
+
+    public function test_invitado_sin_autenticar_no_puede_acceder_a_rutas_privadas(): void
+    {
+        $cliente = $this->nuevoCliente();
+        $rutas = ['/alumnos', '/tablero', '/profesores', '/clases', '/inscripciones', '/auditoria', '/profesor/clases', '/mi/perfil', '/mi/notas'];
+        foreach ($rutas as $ruta) {
+            $r = $cliente->get($ruta);
+            $this->assertTrue(
+                in_array($r->getStatusCode(), [302, 401, 403], true),
+                "Ruta privada {$ruta} accesible sin login (código {$r->getStatusCode()})"
+            );
+        }
+    }
+
+    public function test_alumno_no_puede_escalar_a_director_ni_profesor(): void
+    {
+        $this->loginComo('alumno');
+        $rutasDirector = ['/tablero', '/profesores', '/clases', '/inscripciones', '/auditoria', '/alumnos/nuevo'];
+        foreach ($rutasDirector as $ruta) {
+            $r = $this->get($ruta);
+            $this->assertSame(403, $r->getStatusCode(), "Alumno no debe poder acceder a {$ruta}");
+        }
+
+        $rProf = $this->get('/profesor/clases');
+        $this->assertSame(403, $rProf->getStatusCode(), 'Alumno no debe poder acceder al portal de profesores');
+    }
+
+    public function test_profesor_no_puede_escalar_a_director(): void
+    {
+        $this->loginComo('profesor');
+        $rutasDirector = ['/tablero', '/profesores', '/clases', '/inscripciones', '/auditoria', '/alumnos/nuevo'];
+        foreach ($rutasDirector as $ruta) {
+            $r = $this->get($ruta);
+            $this->assertSame(403, $r->getStatusCode(), "Profesor no debe poder acceder a {$ruta}");
+        }
+    }
+
+    public function test_manipulacion_de_idor_entre_alumnos_responde_404(): void
+    {
+        $this->loginComo('alumno');
+        $otroId = $this->crearAlumno('Victima', 'Prueba');
+
+        $rVer = $this->get("/alumnos/{$otroId}");
+        $this->assertSame(404, $rVer->getStatusCode(), 'Ver alumno ajeno debe devolver 404 (no 403 ni 200)');
+
+        $rFicha = $this->get("/alumnos/{$otroId}/ficha?formato=pdf");
+        $this->assertSame(404, $rFicha->getStatusCode(), 'Descargar ficha ajena debe devolver 404');
+    }
 }
+

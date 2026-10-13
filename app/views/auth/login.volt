@@ -50,14 +50,6 @@
           </button>
         </form>
       </div>
-      <div class="card-footer bg-light text-muted small p-3">
-        <strong>Cuentas de demostración:</strong>
-        <ul class="mb-0 ps-3 mt-1">
-          <li><strong>Director:</strong> <code>director</code> / <code>Director123!</code></li>
-          <li><strong>Profesor:</strong> <code>profesor1</code> / <code>Profesor123!</code></li>
-          <li><strong>Alumno:</strong> <code>alumno1</code> / <code>Alumno123!</code></li>
-        </ul>
-      </div>
     </div>
   </div>
 </div>

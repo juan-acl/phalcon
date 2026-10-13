@@ -33,6 +33,48 @@ $router->addPost("/catalogos/$tipos/crear", ['controller' => 'catalogos', 'actio
 $router->addGet("/catalogos/$tipos/{id:[0-9]+}/editar", ['controller' => 'catalogos', 'action' => 'editar']);
 $router->addPost("/catalogos/$tipos/{id:[0-9]+}/actualizar", ['controller' => 'catalogos', 'action' => 'actualizar']);
 $router->addPost("/catalogos/$tipos/{id:[0-9]+}/eliminar", ['controller' => 'catalogos', 'action' => 'eliminar']);
+$router->addPost('/catalogos/semestres/{id:[0-9]+}/cerrar', ['controller' => 'catalogos', 'action' => 'cerrar', 'tipo' => 'semestres']);
+$router->addPost('/catalogos/semestres/{id:[0-9]+}/reabrir', ['controller' => 'catalogos', 'action' => 'reabrir', 'tipo' => 'semestres']);
+
+// ---- Tablero de Control ----
+$router->addGet('/tablero', ['controller' => 'tablero', 'action' => 'index']);
+
+// ---- Docentes (Profesores) ----
+$router->addGet('/profesores', ['controller' => 'profesores', 'action' => 'index']);
+$router->addGet('/profesores/nuevo', ['controller' => 'profesores', 'action' => 'nuevo']);
+$router->addPost('/profesores/crear', ['controller' => 'profesores', 'action' => 'crear']);
+$router->addGet('/profesores/{id:[0-9]+}/editar', ['controller' => 'profesores', 'action' => 'editar']);
+$router->addPost('/profesores/{id:[0-9]+}/actualizar', ['controller' => 'profesores', 'action' => 'actualizar']);
+$router->addPost('/profesores/{id:[0-9]+}/eliminar', ['controller' => 'profesores', 'action' => 'eliminar']);
+
+// ---- Clases ----
+$router->addGet('/clases', ['controller' => 'clases', 'action' => 'index']);
+$router->addGet('/clases/nueva', ['controller' => 'clases', 'action' => 'nueva']);
+$router->addPost('/clases/crear', ['controller' => 'clases', 'action' => 'crear']);
+$router->addGet('/clases/{id:[0-9]+}/editar', ['controller' => 'clases', 'action' => 'editar']);
+$router->addPost('/clases/{id:[0-9]+}/actualizar', ['controller' => 'clases', 'action' => 'actualizar']);
+$router->addPost('/clases/{id:[0-9]+}/eliminar', ['controller' => 'clases', 'action' => 'eliminar']);
+
+// ---- Inscripciones ----
+$router->addGet('/inscripciones', ['controller' => 'inscripciones', 'action' => 'index']);
+$router->addGet('/inscripciones/nueva', ['controller' => 'inscripciones', 'action' => 'nueva']);
+$router->addPost('/inscripciones/crear', ['controller' => 'inscripciones', 'action' => 'crear']);
+$router->addPost('/inscripciones/{id:[0-9]+}/eliminar', ['controller' => 'inscripciones', 'action' => 'eliminar']);
+
+// ---- Auditoría ----
+$router->addGet('/auditoria', ['controller' => 'auditoria', 'action' => 'index']);
+
+// ---- Portal Docente ----
+$router->addGet('/profesor', ['controller' => 'profesor', 'action' => 'index']);
+$router->addGet('/profesor/clases', ['controller' => 'profesor', 'action' => 'clases']);
+$router->addGet('/profesor/clases/{id:[0-9]+}', ['controller' => 'profesor', 'action' => 'clase']);
+$router->addPost('/profesor/clases/{id:[0-9]+}/notas', ['controller' => 'profesor', 'action' => 'notas']);
+$router->addPost('/profesor/clases/{id:[0-9]+}/publicar', ['controller' => 'profesor', 'action' => 'publicar']);
+
+// ---- Portal Estudiante ----
+$router->addGet('/mi/perfil', ['controller' => 'alumno', 'action' => 'perfil']);
+$router->addGet('/mi/notas', ['controller' => 'alumno', 'action' => 'notas']);
+$router->addGet('/mi/ficha', ['controller' => 'alumno', 'action' => 'perfil']);
 
 // ---- Reportes ----
 $router->addGet('/reportes/alumnos-por-carrera', ['controller' => 'reportes', 'action' => 'alumnosPorCarrera']);

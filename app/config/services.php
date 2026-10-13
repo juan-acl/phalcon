@@ -79,6 +79,11 @@ $di->setShared('aclService', function () {
     return new \App\Library\Auth\AclService();
 });
 
+// ---- Servicio de pertenencia y control por fila ----
+$di->setShared('accesoService', function () use ($di) {
+    return new \App\Library\Auth\AccesoService($di->getShared('db'));
+});
+
 // ---- Base de datos (MySQL/MariaDB) ----
 $di->setShared('db', function () use ($config) {
     $db = new Mysql($config['db']);

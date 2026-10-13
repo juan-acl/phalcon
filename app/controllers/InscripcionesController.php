@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\Alumno;
+use App\Models\Clase;
+use App\Models\Inscripcion;
+
+class InscripcionesController extends BaseController
+{
+    public function indexAction(): void
+    {
+        $claseId = (int) $this->request->getQuery('clase_id', 'int', 0);
+        $conds = [];
+        $binds = [];
+
+        if ($claseId > 0) {
+            $conds[] = 'clase_id = :cid:';
+            $binds['cid'] = $claseId;
+        }
+
+        $params = ['order' => 'clase_id DESC, id DESC', 'limit' => 500];
+        if (!empty($conds)) {
+            $params['conditions'] = implode(' AND ', $conds);
+            $params['bind'] = $binds;
+        }
+
+        $inscripciones = Inscripcion::find($params);
+        $clases = Clase::find(['order' => 'semestre_id DESC, curso_id ASC']);
+
+        $this->view->setVar('inscripciones', $inscripciones);
+        $this->view->setVar('clases', $clases);
+        $this->view->setVar('claseSeleccionada', $claseId);
+        $this->view->pick('inscripciones/index');
+    }
+
+    public function nuevaAction(): void
+    {
+        $claseIdDefecto = (int) $this->request->getQuery('clase_id', 'int', 0);
+        $this->view->setVar('alumnos', Alumno::find(['order' => 'apellidos ASC, nombres ASC']));
+        $this->view->setVar('clases', Clase::find(['order' => 'semestre_id DESC, curso_id ASC']));
+        $this->view->setVar('claseIdDefecto', $claseIdDefecto);
+        $this->view->setVar('old', ['clase_id' => $claseIdDefecto]);
+        $this->view->setVar('errores', []);
+        $this->view->pick('inscripciones/nueva');
+    }
+
+    public function crearAction()
+    {
+        $alumnoId = (int) $this->request->getPost('alumno_id', 'int', 0);
+        $claseId  = (int) $this->request->getPost('clase_id', 'int', 0);
+
+        $datos = [
+            'alumno_id' => $alumnoId,
+            'clase_id'  => $claseId,
+        ];
+
+        $errores = [];
+        if (!Alumno::findFirstById($alumnoId)) { $errores[] = 'Seleccione un alumno válido'; }
+        if (!Clase::findFirstById($claseId))   { $errores[] = 'Seleccione una clase válida'; }
+
+        if (empty($errores)) {
+            $existe = Inscripcion::findFirst([
+                'conditions' => 'alumno_id = :a: AND clase_id = :c:',
+                'bind'       => ['a' => $alumnoId, 'c' => $claseId],
+            ]);
+            if ($existe) {
+                $errores[] = 'El alumno ya se encuentra inscrito en esta clase';
+            }
+        }
+
+        if (!empty($errores)) {
+            $this->conErrores($errores, $datos);
+            $this->view->setVar('alumnos', Alumno::find(['order' => 'apellidos ASC, nombres ASC']));
+            $this->view->setVar('clases', Clase::find(['order' => 'semestre_id DESC, curso_id ASC']));
+            $this->view->setVar('claseIdDefecto', $claseId);
+            $this->view->pick('inscripciones/nueva');
+            return;
+        }
+
+        $insc = new Inscripcion();
+        $insc->assign([
+            'alumno_id' => $alumnoId,
+            'clase_id'  => $claseId,
+        ], ['alumno_id', 'clase_id']);
+
+        if (!$insc->save()) {
+            $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($insc->getMessages())), $datos);
+            $this->view->setVar('alumnos', Alumno::find(['order' => 'apellidos ASC, nombres ASC']));
+            $this->view->setVar('clases', Clase::find(['order' => 'semestre_id DESC, curso_id ASC']));
+            $this->view->setVar('claseIdDefecto', $claseId);
+            $this->view->pick('inscripciones/nueva');
+            return;
+        }
+
+        $this->flashSession->success('Alumno inscrito en la clase exitosamente.');
+        return $this->irA('inscripciones?clase_id=' . $claseId);
+    }
+
+    public function eliminarAction()
+    {
+        $id = (int) $this->dispatcher->getParam('id');
+        $insc = Inscripcion::findFirstById($id);
+        if (!$insc) {
+            $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+            return;
+        }
+
+        $claseId = (int) $insc->clase_id;
+        if (!$insc->delete()) {
+            $this->flashSession->error('No se pudo anular la inscripción.');
+        } else {
+            $this->flashSession->success('Inscripción anulada correctamente.');
+        }
+
+        return $this->irA('inscripciones?clase_id=' . $claseId);
+    }
+}
