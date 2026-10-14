@@ -41,3 +41,19 @@ INSERT IGNORE INTO inscripciones (alumno_id, clase_id)
 SELECT DISTINCT n.alumno_id, c.id
   FROM notas n
   JOIN clases c ON c.curso_id = n.curso_id AND c.seccion_id = n.seccion_id AND c.semestre_id = n.semestre_id;
+
+-- Usuarios de demostración (director: Director123!, profesores: Profesor123!, alumnos: Alumno123!)
+INSERT IGNORE INTO usuarios (usuario, password_hash, rol, profesor_id, alumno_id, activo, debe_cambiar_clave) VALUES
+ ('director',  '$2y$10$zmqtq0P/lra6Gj7oa4VCluW57xAXJwjlkyprmuGj/qmwnHXrg44eW', 'director', NULL, NULL, 1, 0),
+ ('profesor1', '$2y$10$o1Tn0rlf5LdokHE4AkrdAewbFC9/WMyQExqEshfgmuTmx/2ZO6apu', 'profesor', 1,    NULL, 1, 0),
+ ('profesor2', '$2y$10$o1Tn0rlf5LdokHE4AkrdAewbFC9/WMyQExqEshfgmuTmx/2ZO6apu', 'profesor', 2,    NULL, 1, 0),
+ ('alumno1',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 1,    1, 0),
+ ('alumno2',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 2,    1, 0),
+ ('alumno3',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 3,    1, 0),
+ ('alumno4',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 4,    1, 0),
+ ('alumno5',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 5,    1, 0),
+ ('alumno6',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 6,    1, 0),
+ ('alumno7',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 7,    1, 0),
+ ('alumno8',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 8,    1, 0),
+ ('alumno9',   '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 9,    1, 0),
+ ('alumno10',  '$2y$10$PX//pc5C5rs8yOG4vAsZsOdiGNKC6UziaI2Biv1lT5oksgHNpSp4W', 'alumno',   NULL, 10,   1, 0);
