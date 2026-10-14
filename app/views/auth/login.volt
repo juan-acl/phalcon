@@ -6,6 +6,12 @@
         <small class="text-white-50">Control Académico y Escolar</small>
       </div>
       <div class="card-body p-4">
+        {% if auth is defined and auth %}
+          <div class="alert alert-info py-2 small mb-3">
+            <i class="bi bi-info-circle me-1"></i> Sesión activa como <strong>{{ auth['usuario']|e }}</strong> ({{ auth['rol']|e }}). Ingrese credenciales para cambiar de usuario o <a href="{{ url('logout')|e }}" class="alert-link">Cerrar sesión</a>.
+          </div>
+        {% endif %}
+
         {% if errores is defined and errores|length > 0 %}
           <div class="alert alert-danger" role="alert">
             <ul class="mb-0 ps-3">
@@ -16,8 +22,8 @@
           </div>
         {% endif %}
 
-        <form method="post" action="{{ url('login') }}" autocomplete="off">
-          <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}">
+        <form method="post" action="{{ url('login')|e }}" autocomplete="off">
+          <input type="hidden" name="{{ security.getTokenKey()|e }}" value="{{ security.getToken()|e }}">
 
           <div class="mb-3">
             <label for="usuario" class="form-label">Usuario</label>

@@ -83,6 +83,7 @@ $router->addGet('/reportes/notas', ['controller' => 'reportes', 'action' => 'not
 // ---- Autenticación y Cuenta ----
 $router->addGet('/login', ['controller' => 'auth', 'action' => 'login']);
 $router->addPost('/login', ['controller' => 'auth', 'action' => 'login']);
+$router->addGet('/logout', ['controller' => 'auth', 'action' => 'logout']);
 $router->addPost('/logout', ['controller' => 'auth', 'action' => 'logout']);
 $router->addGet('/cuenta/clave', ['controller' => 'cuenta', 'action' => 'clave']);
 $router->addPost('/cuenta/clave', ['controller' => 'cuenta', 'action' => 'clave']);

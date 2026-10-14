@@ -8,11 +8,6 @@ class AuthController extends BaseController
 {
     public function loginAction()
     {
-        if ($this->session->has('auth')) {
-            $auth = $this->session->get('auth');
-            return $this->redirigirPorRol($auth['rol'] ?? 'director', $auth);
-        }
-
         if (!$this->request->isPost()) {
             return;
         }
@@ -68,6 +63,8 @@ class AuthController extends BaseController
         $usuario->ultimo_acceso     = date('Y-m-d H:i:s');
         $usuario->save();
 
+        // Limpiar sesión anterior si existía para cambio limpio de usuario
+        $this->session->remove('auth');
         // Evitar fijación de sesión: regenerar ID
         $this->session->regenerateId(true);
 
@@ -91,20 +88,18 @@ class AuthController extends BaseController
 
     public function logoutAction()
     {
-        if ($this->request->isPost()) {
-            $this->session->remove('auth');
-            $this->session->destroy();
-        }
+        $this->session->remove('auth');
+        $this->session->destroy();
         return $this->irA('login');
     }
 
     private function redirigirPorRol(string $rol, array $auth)
     {
-        if ($rol === 'alumno' && !empty($auth['alumno_id'])) {
-            return $this->irA('alumnos/' . $auth['alumno_id'] . '/ficha');
+        if ($rol === 'alumno') {
+            return $this->irA('mi/notas');
         }
         if ($rol === 'profesor') {
-            return $this->irA('reportes/notas');
+            return $this->irA('profesor/clases');
         }
         return $this->irA('alumnos');
     }

@@ -45,14 +45,14 @@ class AclService
         // Director: acceso total
         $this->acl->allow('director', '*', '*');
 
-        // Invitado: página de inicio, login y páginas de error
+        // Invitado: página de inicio, login, logout y páginas de error
         $this->acl->allow('invitado', 'index', 'index');
-        $this->acl->allow('invitado', 'auth', 'login');
+        $this->acl->allow('invitado', 'auth', ['login', 'logout']);
         $this->acl->allow('invitado', 'error', '*');
 
         // Profesor
         $this->acl->allow('profesor', 'index', 'index');
-        $this->acl->allow('profesor', 'auth', 'logout');
+        $this->acl->allow('profesor', 'auth', ['login', 'logout']);
         $this->acl->allow('profesor', 'cuenta', 'clave');
         $this->acl->allow('profesor', 'reportes', ['alumnosporcarrera', 'notas']);
         $this->acl->allow('profesor', 'alumnos', ['ver', 'ficha']);
@@ -62,7 +62,7 @@ class AclService
 
         // Alumno
         $this->acl->allow('alumno', 'index', 'index');
-        $this->acl->allow('alumno', 'auth', 'logout');
+        $this->acl->allow('alumno', 'auth', ['login', 'logout']);
         $this->acl->allow('alumno', 'cuenta', 'clave');
         $this->acl->allow('alumno', 'alumnos', ['ver', 'ficha']);
         $this->acl->allow('alumno', 'alumno', '*');

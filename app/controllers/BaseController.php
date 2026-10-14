@@ -13,8 +13,13 @@ abstract class BaseController extends Controller
 {
     public function beforeExecuteRoute(Dispatcher $dispatcher): bool
     {
-        // 1. Verificación CSRF en todas las peticiones POST
-        if ($this->request->isPost() && !$this->security->checkToken()) {
+        $controller = strtolower($dispatcher->getControllerName());
+        $action     = strtolower($dispatcher->getActionName());
+
+        $esLogout = ($controller === 'auth' && $action === 'logout');
+
+        // 1. Verificación CSRF en todas las peticiones POST (excepto logout para permitir salir siempre)
+        if ($this->request->isPost() && !$esLogout && !$this->security->checkToken()) {
             $dispatcher->forward(['controller' => 'error', 'action' => 'forbidden']);
             return false;
         }
@@ -23,9 +28,6 @@ abstract class BaseController extends Controller
         $auth = $this->session->get('auth');
         $rol  = $auth ? ($auth['rol'] ?? 'invitado') : 'invitado';
         $this->view->setVar('auth', $auth);
-
-        $controller = strtolower($dispatcher->getControllerName());
-        $action     = strtolower($dispatcher->getActionName());
 
         // 3. Verificación de permisos por ACL
         /** @var \App\Library\Auth\AclService $aclService */

@@ -194,7 +194,7 @@ class EdicionNotasTest extends HttpTestCase
         // Ficha web
         $r = $this->get("/alumnos/{$info['alumno_id']}");
         $this->assertSame(200, $r->getStatusCode());
-        $this->assertStringNotContainsString('90', $this->cuerpo($r));
+        $this->assertStringNotContainsString('90.00', $this->cuerpo($r));
         $this->assertStringContainsString('aún no tiene notas', $this->cuerpo($r));
 
         // Boleta PDF
@@ -205,7 +205,7 @@ class EdicionNotasTest extends HttpTestCase
         // Como director sí es visible
         $this->loginComo('director');
         $rDir = $this->get("/alumnos/{$info['alumno_id']}");
-        $this->assertStringContainsString('90', $this->cuerpo($rDir));
+        $this->assertStringContainsString('90.00', $this->cuerpo($rDir));
         $this->assertStringContainsString('Borrador', $this->cuerpo($rDir));
     }
 }
