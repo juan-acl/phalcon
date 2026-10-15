@@ -148,5 +148,25 @@
         </tbody>
       </table>
     </div>
+    {% if page is defined and page.last > 1 %}
+      <div class="card-footer bg-white border-top d-flex flex-wrap justify-content-between align-items-center py-2 px-3 gap-2">
+        <span class="text-muted small">
+          Mostrando {{ ((page.current - 1) * page.limit + 1)|e }} a {{ (page.current * page.limit > page.total_items ? page.total_items : (page.current * page.limit))|e }} de {{ page.total_items|e }} registros de auditoría
+        </span>
+        <nav aria-label="Paginación de auditoría">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if page.current <= 1 %}disabled{% endif %}">
+              <a class="page-link" href="{{ url('auditoria?pagina=' ~ page.previous ~ '&accion=' ~ filtros['accion']|url_encode ~ '&alumno_id=' ~ filtros['alumno_id'] ~ '&fecha_desde=' ~ filtros['fecha_desde']|url_encode ~ '&fecha_hasta=' ~ filtros['fecha_hasta']|url_encode)|e }}">&laquo; Anterior</a>
+            </li>
+            <li class="page-item active">
+              <span class="page-link">Página {{ page.current|e }} de {{ page.last|e }}</span>
+            </li>
+            <li class="page-item {% if page.current >= page.last %}disabled{% endif %}">
+              <a class="page-link" href="{{ url('auditoria?pagina=' ~ page.next ~ '&accion=' ~ filtros['accion']|url_encode ~ '&alumno_id=' ~ filtros['alumno_id'] ~ '&fecha_desde=' ~ filtros['fecha_desde']|url_encode ~ '&fecha_hasta=' ~ filtros['fecha_hasta']|url_encode)|e }}">Siguiente &raquo;</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
   </div>
 </div>

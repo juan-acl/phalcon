@@ -37,9 +37,11 @@ class AuditoriaController extends BaseController
             $binds['fhasta'] = $fechaHasta . ' 23:59:59';
         }
 
+        $pagina = max(1, (int) $this->request->getQuery('pagina', 'int', 1));
+        $limite = 15;
+
         $params = [
             'order' => 'created_at DESC, id DESC',
-            'limit' => 200,
         ];
 
         if (!empty($conds)) {
@@ -47,10 +49,18 @@ class AuditoriaController extends BaseController
             $params['bind'] = $binds;
         }
 
-        $auditorias = NotaAuditoria::find($params);
+        $paginator = new \Phalcon\Paginator\Adapter\Model([
+            'model'      => NotaAuditoria::class,
+            'parameters' => $params,
+            'limit'      => $limite,
+            'page'       => $pagina,
+        ]);
+        $page = $paginator->paginate();
+
         $alumnos = Alumno::find(['order' => 'apellidos ASC, nombres ASC']);
 
-        $this->view->setVar('auditorias', $auditorias);
+        $this->view->setVar('page', $page);
+        $this->view->setVar('auditorias', $page->getItems());
         $this->view->setVar('alumnos', $alumnos);
         $this->view->setVar('filtros', [
             'accion'      => $accion,

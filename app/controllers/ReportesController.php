@@ -29,7 +29,7 @@ class ReportesController extends BaseController
         $carreraIdRaw = $this->request->getQuery('carrera_id', null, '');
         $carreraId = is_numeric($carreraIdRaw) && (int) $carreraIdRaw > 0 ? (int) $carreraIdRaw : null;
 
-        $ordenarPor = strtolower((string) $this->request->getQuery('ordenar_por', 'string', 'apellidos'));
+        $ordenarPor = strtolower((string) $this->request->getQuery('ordenar_por', 'string', 'id'));
         $direccion  = strtoupper((string) $this->request->getQuery('direccion', 'string', 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
 
         $service = new ReporteService($this->db, (int) $this->config['app']['notaAprobacion']);

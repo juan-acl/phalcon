@@ -36,6 +36,12 @@
       <table class="table table-hover table-striped align-middle mb-0">
         <thead class="table-light">
           <tr>
+            <th style="width: 75px;" class="text-center">
+              <a href="{{ url('alumnos')|e }}?q={{ q|e }}&campo=id&dir={% if campo == 'id' and dir == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                #
+                {% if campo == 'id' %}<i class="bi bi-arrow-{% if dir == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
             <th style="width: 70px;" class="text-center">Foto</th>
             <th>
               <a href="{{ url('alumnos')|e }}?q={{ q|e }}&campo=apellidos&dir={% if campo == 'apellidos' and dir == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
@@ -61,6 +67,9 @@
         <tbody>
           {% for a in alumnos %}
             <tr>
+              <td class="text-center fw-bold text-muted">
+                {{ a.id|e }}
+              </td>
               <td class="text-center">
                 {% if a.foto is not empty %}
                   <img src="{{ url(a.foto)|e }}" alt="Foto" class="rounded-circle border" style="width: 45px; height: 45px; object-fit: cover;">
@@ -105,7 +114,7 @@
             </tr>
           {% else %}
             <tr>
-              <td colspan="5" class="text-center py-4 text-muted">
+              <td colspan="6" class="text-center py-4 text-muted">
                 <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                 No se encontraron alumnos registrados.
               </td>
@@ -114,5 +123,25 @@
         </tbody>
       </table>
     </div>
+    {% if page is defined and page.last > 1 %}
+      <div class="card-footer bg-white border-top d-flex flex-wrap justify-content-between align-items-center py-2 px-3 gap-2">
+        <span class="text-muted small">
+          Mostrando {{ ((page.current - 1) * page.limit + 1)|e }} a {{ (page.current * page.limit > page.total_items ? page.total_items : (page.current * page.limit))|e }} de {{ page.total_items|e }} estudiantes
+        </span>
+        <nav aria-label="Paginación de alumnos">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if page.current <= 1 %}disabled{% endif %}">
+              <a class="page-link" href="{{ url('alumnos?pagina=' ~ page.previous ~ '&q=' ~ q|url_encode ~ '&campo=' ~ campo ~ '&dir=' ~ dir)|e }}">&laquo; Anterior</a>
+            </li>
+            <li class="page-item active">
+              <span class="page-link">Página {{ page.current|e }} de {{ page.last|e }}</span>
+            </li>
+            <li class="page-item {% if page.current >= page.last %}disabled{% endif %}">
+              <a class="page-link" href="{{ url('alumnos?pagina=' ~ page.next ~ '&q=' ~ q|url_encode ~ '&campo=' ~ campo ~ '&dir=' ~ dir)|e }}">Siguiente &raquo;</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
   </div>
 </div>

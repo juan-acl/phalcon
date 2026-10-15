@@ -14,7 +14,7 @@
     <a href="{{ url('alumnos/' ~ alumno.id ~ '/ficha?formato=pdf')|e }}" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf me-1"></i>Descargar Ficha PDF
     </a>
-    {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
+    {% if auth is defined and (auth['rol'] == 'director' or (auth['rol'] == 'profesor' and tieneClasesConAlumno)) %}
       <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva')|e }}" class="btn btn-success btn-sm">
         <i class="bi bi-plus-circle me-1"></i>Ingresar Nota
       </a>
@@ -123,7 +123,7 @@
                 {% endif %}
               </td>
               <td class="text-end pe-4">
-                {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
+                {% if auth is defined and (auth['rol'] == 'director' or (auth['rol'] == 'profesor' and h['profesor_id'] is defined and h['profesor_id'] == auth['profesor_id'])) %}
                   <a href="{{ url('notas/' ~ h['id'] ~ '/editar')|e }}" class="btn btn-sm btn-outline-primary me-1" title="Editar Nota">
                     <i class="bi bi-pencil"></i>
                   </a>

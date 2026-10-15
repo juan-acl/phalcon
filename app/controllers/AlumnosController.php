@@ -26,7 +26,7 @@ class AlumnosController extends BaseController
         }
         $this->view->setVar('q', $q);
 
-        $campo = strtolower((string) $this->request->getQuery('campo', 'string', 'apellidos'));
+        $campo = strtolower((string) $this->request->getQuery('campo', 'string', 'id'));
         $dir   = strtoupper((string) $this->request->getQuery('dir', 'string', 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
 
         $orderSql = match ($campo) {
@@ -36,21 +36,25 @@ class AlumnosController extends BaseController
             default            => "apellidos {$dir}, nombres {$dir}",
         };
 
+        $pagina = max(1, (int) $this->request->getQuery('pagina', 'int', 1));
+        $limite = 10;
+
+        $params = ['order' => $orderSql];
         if ($q !== '') {
-            $alumnos = Alumno::find([
-                'conditions' => 'nombres LIKE :q: OR apellidos LIKE :q:',
-                'bind'       => ['q' => '%' . $q . '%'],
-                'order'      => $orderSql,
-                'limit'      => 500,
-            ]);
-        } else {
-            $alumnos = Alumno::find([
-                'order' => $orderSql,
-                'limit' => 500,
-            ]);
+            $params['conditions'] = 'nombres LIKE :q: OR apellidos LIKE :q:';
+            $params['bind']       = ['q' => '%' . $q . '%'];
         }
 
-        $this->view->setVar('alumnos', $alumnos);
+        $paginator = new \Phalcon\Paginator\Adapter\Model([
+            'model'      => Alumno::class,
+            'parameters' => $params,
+            'limit'      => $limite,
+            'page'       => $pagina,
+        ]);
+        $page = $paginator->paginate();
+
+        $this->view->setVar('page', $page);
+        $this->view->setVar('alumnos', $page->getItems());
         $this->view->setVar('campo', $campo);
         $this->view->setVar('dir', $dir);
         $this->view->pick('alumnos/index');
@@ -205,8 +209,17 @@ class AlumnosController extends BaseController
         $service = new ReporteService($this->db, (int) $this->config['app']['notaAprobacion']);
         $historial = $service->historial($id, $this->esAlumno());
 
+        $tieneClasesConAlumno = true;
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            $tieneClasesConAlumno = $profId && $acceso->profesorPuedeVerAlumno($profId, $id);
+        }
+
         $this->view->setVar('alumno', $alumno);
         $this->view->setVar('historial', $historial);
+        $this->view->setVar('tieneClasesConAlumno', $tieneClasesConAlumno);
         $this->view->setVar('umbral', (int) $this->config['app']['notaAprobacion']);
         $this->view->pick('alumnos/ver');
     }

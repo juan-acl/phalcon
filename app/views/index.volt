@@ -40,6 +40,7 @@
             <a class="nav-link" href="{{ url('auditoria')|e }}"><i class="bi bi-shield-check me-1"></i>Auditoría</a>
           {% elseif auth['rol'] == 'profesor' %}
             <a class="nav-link" href="{{ url('profesor/clases')|e }}"><i class="bi bi-mortarboard me-1"></i>Mis Clases</a>
+            <a class="nav-link" href="{{ url('notas/buscar')|e }}"><i class="bi bi-journal-plus me-1"></i>Ingresar Notas</a>
             <a class="nav-link" href="{{ url('reportes/notas')|e }}"><i class="bi bi-journal-text me-1"></i>Reporte Notas</a>
             <a class="nav-link" href="{{ url('reportes/alumnos-por-carrera')|e }}"><i class="bi bi-file-earmark-bar-graph me-1"></i>Alumnos por Carrera</a>
           {% elseif auth['rol'] == 'alumno' %}

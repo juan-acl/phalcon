@@ -20,10 +20,10 @@
 
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-body p-3">
-    <form method="get" action="{{ url('reportes/notas')|e }}" class="row g-2 align-items-center">
+    <form method="get" action="{{ url('reportes/notas')|e }}" class="row g-3 align-items-end">
       <div class="col-12 col-sm-6 col-md-3">
         <label class="form-label small text-muted fw-semibold mb-1">Carrera</label>
-        <select name="carrera_id" class="form-select form-select-sm">
+        <select name="carrera_id" class="form-select">
           <option value="">Todas las carreras</option>
           {% for c in carreras %}
             <option value="{{ c.id|e }}" {% if carreraId == c.id %}selected{% endif %}>
@@ -35,7 +35,7 @@
 
       <div class="col-12 col-sm-6 col-md-3">
         <label class="form-label small text-muted fw-semibold mb-1">Curso</label>
-        <select name="curso_id" class="form-select form-select-sm">
+        <select name="curso_id" class="form-select">
           <option value="">Todos los cursos</option>
           {% for cu in cursos %}
             <option value="{{ cu.id|e }}" {% if cursoId == cu.id %}selected{% endif %}>
@@ -47,7 +47,7 @@
 
       <div class="col-6 col-sm-6 col-md-2">
         <label class="form-label small text-muted fw-semibold mb-1">Sección</label>
-        <select name="seccion_id" class="form-select form-select-sm">
+        <select name="seccion_id" class="form-select">
           <option value="">Todas</option>
           {% for s in secciones %}
             <option value="{{ s.id|e }}" {% if seccionId == s.id %}selected{% endif %}>
@@ -59,15 +59,15 @@
 
       <div class="col-6 col-sm-6 col-md-2">
         <label class="form-label small text-muted fw-semibold mb-1">Sentido</label>
-        <select name="direccion" class="form-select form-select-sm">
+        <select name="direccion" class="form-select">
           <option value="ASC" {% if direccion == 'ASC' %}selected{% endif %}>Ascendente</option>
           <option value="DESC" {% if direccion == 'DESC' %}selected{% endif %}>Descendente</option>
         </select>
       </div>
 
-      <div class="col-12 col-md-2 d-flex align-items-end gap-2 pt-1 pt-md-0">
-        <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Filtrar</button>
-        <a href="{{ url('reportes/notas')|e }}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+      <div class="col-12 col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
+        <a href="{{ url('reportes/notas')|e }}" class="btn btn-outline-secondary">Limpiar</a>
       </div>
     </form>
   </div>

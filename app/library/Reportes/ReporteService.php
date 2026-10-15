@@ -16,14 +16,14 @@ final class ReporteService
     }
 
     /** Alumnos por carrera; $carreraId opcional. Permite ordenamiento dinámico seguro. */
-    public function alumnosPorCarrera(?int $carreraId = null, string $ordenarPor = 'apellidos', string $direccion = 'ASC'): array
+    public function alumnosPorCarrera(?int $carreraId = null, string $ordenarPor = 'id', string $direccion = 'ASC'): array
     {
         $dir = strtoupper(trim($direccion)) === 'DESC' ? 'DESC' : 'ASC';
         $ordenSql = match (strtolower(trim($ordenarPor))) {
-            'id'               => "a.id {$dir}",
             'carrera'          => "c.nombre {$dir}, a.apellidos {$dir}, a.nombres {$dir}",
+            'apellidos'        => "a.apellidos {$dir}, a.nombres {$dir}",
             'fecha_nacimiento' => "a.fecha_nacimiento {$dir}, a.apellidos {$dir}",
-            default            => "a.apellidos {$dir}, a.nombres {$dir}",
+            default            => "a.id {$dir}",
         };
 
         $sql = 'SELECT c.id AS carrera_id, c.nombre AS carrera, a.id, a.nombres, a.apellidos, a.fecha_nacimiento
@@ -77,11 +77,13 @@ final class ReporteService
     {
         $sql = 'SELECT n.id, n.estado, n.updated_at, sm.id AS semestre_id, sm.nombre AS semestre, sm.cerrado AS semestre_cerrado,
                        cu.nombre AS curso, s.nombre AS seccion, n.nota,
-                       (n.nota >= :aprob) AS aprobado
+                       (n.nota >= :aprob) AS aprobado,
+                       cl.profesor_id
                   FROM notas n
                   JOIN cursos cu    ON cu.id = n.curso_id
                   JOIN secciones s  ON s.id  = n.seccion_id
                   JOIN semestres sm ON sm.id = n.semestre_id
+                  LEFT JOIN clases cl ON cl.curso_id = n.curso_id AND cl.seccion_id = n.seccion_id AND cl.semestre_id = n.semestre_id
                  WHERE n.alumno_id = :alumno';
         $binds = ['aprob' => $this->notaAprobacion, 'alumno' => $alumnoId];
 

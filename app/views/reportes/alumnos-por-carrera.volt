@@ -33,8 +33,8 @@
       <div class="col-6 col-md-3">
         <label for="ordenar_por" class="form-label small text-muted fw-semibold mb-1">Ordenar por</label>
         <select name="ordenar_por" id="ordenar_por" class="form-select">
-          <option value="apellidos" {% if ordenarPor == 'apellidos' %}selected{% endif %}>Apellidos y Nombres</option>
           <option value="id" {% if ordenarPor == 'id' %}selected{% endif %}>No. Expediente (#)</option>
+          <option value="apellidos" {% if ordenarPor == 'apellidos' %}selected{% endif %}>Apellidos y Nombres</option>
           <option value="carrera" {% if ordenarPor == 'carrera' %}selected{% endif %}>Carrera</option>
           <option value="fecha_nacimiento" {% if ordenarPor == 'fecha_nacimiento' %}selected{% endif %}>Fecha de Nacimiento</option>
         </select>
@@ -43,8 +43,8 @@
       <div class="col-6 col-md-2">
         <label for="direccion" class="form-label small text-muted fw-semibold mb-1">Sentido</label>
         <select name="direccion" id="direccion" class="form-select">
-          <option value="ASC" {% if direccion == 'ASC' %}selected{% endif %}>Ascendente (A-Z / 1-9)</option>
-          <option value="DESC" {% if direccion == 'DESC' %}selected{% endif %}>Descendente (Z-A / 9-1)</option>
+          <option value="ASC" {% if direccion == 'ASC' %}selected{% endif %}>Ascendente (1-9 / A-Z)</option>
+          <option value="DESC" {% if direccion == 'DESC' %}selected{% endif %}>Descendente (9-1 / Z-A)</option>
         </select>
       </div>
 

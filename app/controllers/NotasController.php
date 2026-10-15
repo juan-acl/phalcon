@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Models\Alumno;
+use App\Models\Clase;
 use App\Models\Curso;
+use App\Models\Inscripcion;
 use App\Models\Nota;
 use App\Models\NotaAuditoria;
 use App\Models\Seccion;
@@ -78,7 +80,7 @@ class NotasController extends BaseController
         $this->view->pick('notas/buscar');
     }
 
-    public function nuevaAction(): void
+    public function nuevaAction()
     {
         $alumnoId = (int) $this->dispatcher->getParam('id');
         $alumno = Alumno::findFirst([
@@ -98,6 +100,19 @@ class NotasController extends BaseController
             if (!$profId || !$acceso->profesorPuedeVerAlumno($profId, $alumnoId)) {
                 $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
                 return;
+            }
+
+            $clasesAlumno = $this->db->fetchOne(
+                'SELECT COUNT(*) AS total
+                   FROM clases cl
+                   JOIN inscripciones i ON i.clase_id = cl.id
+                  WHERE cl.profesor_id = :pid AND i.alumno_id = :aid',
+                \Phalcon\Db\Enum::FETCH_ASSOC,
+                ['pid' => $profId, 'aid' => $alumnoId]
+            );
+            if (empty($clasesAlumno['total'])) {
+                $this->flashSession->error('Usted no imparte clases a este estudiante.');
+                return $this->irA('notas/buscar');
             }
         }
 
@@ -187,19 +202,47 @@ class NotasController extends BaseController
         if ($this->esProfesor()) {
             $profId = $this->profesorId();
             $imparte = $this->db->fetchOne(
-                'SELECT COUNT(*) AS total
+                'SELECT cl.id
                    FROM clases cl
-                  WHERE cl.profesor_id = :pid AND cl.curso_id = :cid AND cl.seccion_id = :sec AND cl.semestre_id = :sem',
+                   JOIN inscripciones i ON i.clase_id = cl.id
+                  WHERE cl.profesor_id = :pid 
+                    AND cl.curso_id = :cid 
+                    AND cl.seccion_id = :sec 
+                    AND cl.semestre_id = :sem
+                    AND i.alumno_id = :aid',
                 \Phalcon\Db\Enum::FETCH_ASSOC,
                 [
                     'pid' => $profId,
                     'cid' => $cursoId,
                     'sec' => $seccionId,
                     'sem' => $semestreId,
+                    'aid' => $alumnoId,
                 ]
             );
-            if (empty($imparte['total'])) {
-                $errores[] = 'Usted no imparte esta asignatura en la sección y semestre indicados.';
+            if (!$imparte) {
+                $errores[] = 'Usted no tiene asignada esta asignatura o el alumno no está inscrito en su sección.';
+            }
+        } else {
+            $totalClases = (int) Clase::count();
+            if ($totalClases > 0) {
+                $tieneProfesor = $this->db->fetchOne(
+                    'SELECT cl.id
+                       FROM clases cl
+                      WHERE cl.curso_id = :cid 
+                        AND cl.seccion_id = :sec 
+                        AND cl.semestre_id = :sem 
+                        AND cl.profesor_id IS NOT NULL 
+                        AND cl.profesor_id > 0',
+                    \Phalcon\Db\Enum::FETCH_ASSOC,
+                    [
+                        'cid' => $cursoId,
+                        'sec' => $seccionId,
+                        'sem' => $semestreId,
+                    ]
+                );
+                if (!$tieneProfesor) {
+                    $errores[] = 'No se puede ingresar nota: este curso no tiene ningún profesor asignado en la sección y semestre indicados.';
+                }
             }
         }
 
@@ -522,20 +565,33 @@ class NotasController extends BaseController
                 ['pid' => $profId, 'aid' => $alumnoId]
             );
 
-            // Si no hay inscripción previa explícita en clases, mostrar las asignaturas que el docente imparte
             if (empty($clasesIds)) {
-                $clasesIds = $this->db->fetchAll(
-                    'SELECT DISTINCT cl.id, cl.curso_id, cl.seccion_id, cl.semestre_id
-                       FROM clases cl
-                      WHERE cl.profesor_id = :pid',
-                    \Phalcon\Db\Enum::FETCH_ASSOC,
-                    ['pid' => $profId]
-                );
+                return ['cursos' => [], 'secciones' => [], 'semestres' => []];
             }
 
             $cursoIds    = array_unique(array_filter(array_map(fn($r) => (int) $r['curso_id'], $clasesIds)));
             $seccionIds  = array_unique(array_filter(array_map(fn($r) => (int) $r['seccion_id'], $clasesIds)));
             $semestreIds = array_unique(array_filter(array_map(fn($r) => (int) $r['semestre_id'], $clasesIds)));
+
+            return [
+                'cursos'    => !empty($cursoIds) ? Curso::find(['conditions' => 'id IN (' . implode(',', $cursoIds) . ')', 'order' => 'nombre ASC']) : [],
+                'secciones' => !empty($seccionIds) ? Seccion::find(['conditions' => 'id IN (' . implode(',', $seccionIds) . ')', 'order' => 'nombre ASC']) : [],
+                'semestres' => !empty($semestreIds) ? Semestre::find(['conditions' => 'id IN (' . implode(',', $semestreIds) . ')', 'order' => 'nombre ASC']) : [],
+            ];
+        }
+
+        // Si es director, mostrar únicamente las asignaturas que tienen un docente asignado en clases
+        $clasesConDocente = $this->db->fetchAll(
+            'SELECT DISTINCT cl.curso_id, cl.seccion_id, cl.semestre_id
+               FROM clases cl
+              WHERE cl.profesor_id IS NOT NULL AND cl.profesor_id > 0',
+            \Phalcon\Db\Enum::FETCH_ASSOC
+        );
+
+        if (!empty($clasesConDocente)) {
+            $cursoIds    = array_unique(array_filter(array_map(fn($r) => (int) $r['curso_id'], $clasesConDocente)));
+            $seccionIds  = array_unique(array_filter(array_map(fn($r) => (int) $r['seccion_id'], $clasesConDocente)));
+            $semestreIds = array_unique(array_filter(array_map(fn($r) => (int) $r['semestre_id'], $clasesConDocente)));
 
             return [
                 'cursos'    => !empty($cursoIds) ? Curso::find(['conditions' => 'id IN (' . implode(',', $cursoIds) . ')', 'order' => 'nombre ASC']) : [],

@@ -5,40 +5,6 @@
   </div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm border-0 border-start border-primary border-4">
-      <div class="card-body">
-        <span class="text-muted small text-uppercase fw-bold">Estudiantes Registrados</span>
-        <h3 class="fw-bold mb-0 text-dark">{{ totalAlumnos|e }}</h3>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm border-0 border-start border-success border-4">
-      <div class="card-body">
-        <span class="text-muted small text-uppercase fw-bold">Docentes</span>
-        <h3 class="fw-bold mb-0 text-dark">{{ totalProfesores|e }}</h3>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm border-0 border-start border-warning border-4">
-      <div class="card-body">
-        <span class="text-muted small text-uppercase fw-bold">Clases Activas</span>
-        <h3 class="fw-bold mb-0 text-dark">{{ totalClases|e }}</h3>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm border-0 border-start border-info border-4">
-      <div class="card-body">
-        <span class="text-muted small text-uppercase fw-bold">Cursos en Catálogo</span>
-        <h3 class="fw-bold mb-0 text-dark">{{ totalCursos|e }}</h3>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="row g-4 mb-4">
   <div class="col-md-6">

@@ -13,7 +13,7 @@ class DirectorGestionTest extends HttpTestCase
         $this->assertSame(200, $resp->getStatusCode());
         $body = (string) $resp->getBody();
         $this->assertStringContainsString('Tablero de Control', $body);
-        $this->assertStringContainsString('Estudiantes Registrados', $body);
+        $this->assertStringContainsString('Rendimiento Académico General', $body);
     }
 
     public function test_director_puede_crear_y_editar_profesor(): void
