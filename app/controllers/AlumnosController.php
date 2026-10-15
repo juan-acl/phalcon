@@ -26,21 +26,33 @@ class AlumnosController extends BaseController
         }
         $this->view->setVar('q', $q);
 
+        $campo = strtolower((string) $this->request->getQuery('campo', 'string', 'apellidos'));
+        $dir   = strtoupper((string) $this->request->getQuery('dir', 'string', 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+
+        $orderSql = match ($campo) {
+            'id'               => "id {$dir}",
+            'carrera'          => "carrera_id {$dir}, apellidos {$dir}",
+            'fecha_nacimiento' => "fecha_nacimiento {$dir}, apellidos {$dir}",
+            default            => "apellidos {$dir}, nombres {$dir}",
+        };
+
         if ($q !== '') {
             $alumnos = Alumno::find([
                 'conditions' => 'nombres LIKE :q: OR apellidos LIKE :q:',
                 'bind'       => ['q' => '%' . $q . '%'],
-                'order'      => 'apellidos ASC, nombres ASC',
+                'order'      => $orderSql,
                 'limit'      => 500,
             ]);
         } else {
             $alumnos = Alumno::find([
-                'order' => 'apellidos ASC, nombres ASC',
+                'order' => $orderSql,
                 'limit' => 500,
             ]);
         }
 
         $this->view->setVar('alumnos', $alumnos);
+        $this->view->setVar('campo', $campo);
+        $this->view->setVar('dir', $dir);
         $this->view->pick('alumnos/index');
     }
 

@@ -19,18 +19,59 @@ class NotasController extends BaseController
         $q = trim((string) $this->request->getQuery('q', null, ''));
         $this->view->setVar('q', $q);
 
-        if ($q !== '') {
-            $alumnos = Alumno::find([
-                'conditions' => 'nombres LIKE :q: OR apellidos LIKE :q:',
-                'bind'       => ['q' => '%' . $q . '%'],
-                'order'      => 'apellidos ASC, nombres ASC',
-                'limit'      => 50,
-            ]);
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            if (!$profId) {
+                $alumnos = [];
+            } else {
+                $filasIds = $this->db->fetchAll(
+                    'SELECT DISTINCT i.alumno_id
+                       FROM inscripciones i
+                       JOIN clases cl ON cl.id = i.clase_id
+                      WHERE cl.profesor_id = :pid',
+                    \Phalcon\Db\Enum::FETCH_ASSOC,
+                    ['pid' => $profId]
+                );
+                $ids = array_map(fn($r) => (int) $r['alumno_id'], $filasIds);
+                if (empty($ids)) {
+                    $alumnos = [];
+                } else {
+                    $conds = [];
+                    $bind  = [];
+                    $placeholders = [];
+                    foreach ($ids as $idx => $idVal) {
+                        $key = 'pid_' . $idx;
+                        $placeholders[] = ':' . $key . ':';
+                        $bind[$key] = $idVal;
+                    }
+                    $conds[] = 'id IN (' . implode(',', $placeholders) . ')';
+                    if ($q !== '') {
+                        $conds[] = '(nombres LIKE :q: OR apellidos LIKE :q:)';
+                        $bind['q'] = '%' . $q . '%';
+                    }
+                    $params = [
+                        'order' => 'apellidos ASC, nombres ASC',
+                        'limit' => 50,
+                    ];
+                    $params['conditions'] = implode(' AND ', $conds);
+                    $params['bind']       = $bind;
+                    $alumnos = Alumno::find($params);
+                }
+            }
         } else {
-            $alumnos = Alumno::find([
-                'order' => 'apellidos ASC, nombres ASC',
-                'limit' => 20,
-            ]);
+            if ($q !== '') {
+                $alumnos = Alumno::find([
+                    'conditions' => 'nombres LIKE :q: OR apellidos LIKE :q:',
+                    'bind'       => ['q' => '%' . $q . '%'],
+                    'order'      => 'apellidos ASC, nombres ASC',
+                    'limit'      => 50,
+                ]);
+            } else {
+                $alumnos = Alumno::find([
+                    'order' => 'apellidos ASC, nombres ASC',
+                    'limit' => 20,
+                ]);
+            }
         }
 
         $this->view->setVar('alumnos', $alumnos);
@@ -50,10 +91,21 @@ class NotasController extends BaseController
             return;
         }
 
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeVerAlumno($profId, $alumnoId)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
+        }
+
+        $opciones = $this->opcionesFormularioNueva($alumnoId);
         $this->view->setVar('alumno', $alumno);
-        $this->view->setVar('cursos', Curso::find(['order' => 'nombre ASC']));
-        $this->view->setVar('semestres', Semestre::find(['order' => 'nombre ASC']));
-        $this->view->setVar('secciones', Seccion::find(['order' => 'nombre ASC']));
+        $this->view->setVar('cursos', $opciones['cursos']);
+        $this->view->setVar('semestres', $opciones['semestres']);
+        $this->view->setVar('secciones', $opciones['secciones']);
         $this->view->setVar('old', []);
         $this->view->setVar('errores', []);
         $this->view->pick('notas/nueva');
@@ -70,6 +122,16 @@ class NotasController extends BaseController
         if (!$alumno) {
             $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
             return;
+        }
+
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            /** @var \App\Library\Auth\AccesoService $acceso */
+            $acceso = $this->di->get('accesoService');
+            if (!$profId || !$acceso->profesorPuedeVerAlumno($profId, $alumnoId)) {
+                $this->dispatcher->forward(['controller' => 'error', 'action' => 'notFound']);
+                return;
+            }
         }
 
         $cursoId = (int) $this->request->getPost('curso_id', null, 0);
@@ -122,6 +184,25 @@ class NotasController extends BaseController
             $errores[] = 'Selecciona una sección válida';
         }
 
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            $imparte = $this->db->fetchOne(
+                'SELECT COUNT(*) AS total
+                   FROM clases cl
+                  WHERE cl.profesor_id = :pid AND cl.curso_id = :cid AND cl.seccion_id = :sec AND cl.semestre_id = :sem',
+                \Phalcon\Db\Enum::FETCH_ASSOC,
+                [
+                    'pid' => $profId,
+                    'cid' => $cursoId,
+                    'sec' => $seccionId,
+                    'sem' => $semestreId,
+                ]
+            );
+            if (empty($imparte['total'])) {
+                $errores[] = 'Usted no imparte esta asignatura en la sección y semestre indicados.';
+            }
+        }
+
         if (empty($errores)) {
             $existe = Nota::findFirst([
                 'conditions' => 'alumno_id = :a: AND curso_id = :c: AND semestre_id = :s:',
@@ -134,10 +215,11 @@ class NotasController extends BaseController
 
         if (!empty($errores)) {
             $this->conErrores($errores, $datos);
+            $opciones = $this->opcionesFormularioNueva($alumnoId);
             $this->view->setVar('alumno', $alumno);
-            $this->view->setVar('cursos', Curso::find(['order' => 'nombre ASC']));
-            $this->view->setVar('semestres', Semestre::find(['order' => 'nombre ASC']));
-            $this->view->setVar('secciones', Seccion::find(['order' => 'nombre ASC']));
+            $this->view->setVar('cursos', $opciones['cursos']);
+            $this->view->setVar('semestres', $opciones['semestres']);
+            $this->view->setVar('secciones', $opciones['secciones']);
             $this->view->pick('notas/nueva');
             return;
         }
@@ -420,6 +502,53 @@ class NotasController extends BaseController
 
         $this->flashSession->success('Nota eliminada y registrada en auditoría correctamente.');
         return $this->irA('alumnos/' . $alumnoId);
+    }
+
+    private function opcionesFormularioNueva(int $alumnoId): array
+    {
+        if ($this->esProfesor()) {
+            $profId = $this->profesorId();
+            if (!$profId) {
+                return ['cursos' => [], 'secciones' => [], 'semestres' => []];
+            }
+
+            // Buscar clases impartidas por este profesor donde el alumno está inscrito
+            $clasesIds = $this->db->fetchAll(
+                'SELECT DISTINCT cl.id, cl.curso_id, cl.seccion_id, cl.semestre_id
+                   FROM clases cl
+                   JOIN inscripciones i ON i.clase_id = cl.id
+                  WHERE cl.profesor_id = :pid AND i.alumno_id = :aid',
+                \Phalcon\Db\Enum::FETCH_ASSOC,
+                ['pid' => $profId, 'aid' => $alumnoId]
+            );
+
+            // Si no hay inscripción previa explícita en clases, mostrar las asignaturas que el docente imparte
+            if (empty($clasesIds)) {
+                $clasesIds = $this->db->fetchAll(
+                    'SELECT DISTINCT cl.id, cl.curso_id, cl.seccion_id, cl.semestre_id
+                       FROM clases cl
+                      WHERE cl.profesor_id = :pid',
+                    \Phalcon\Db\Enum::FETCH_ASSOC,
+                    ['pid' => $profId]
+                );
+            }
+
+            $cursoIds    = array_unique(array_filter(array_map(fn($r) => (int) $r['curso_id'], $clasesIds)));
+            $seccionIds  = array_unique(array_filter(array_map(fn($r) => (int) $r['seccion_id'], $clasesIds)));
+            $semestreIds = array_unique(array_filter(array_map(fn($r) => (int) $r['semestre_id'], $clasesIds)));
+
+            return [
+                'cursos'    => !empty($cursoIds) ? Curso::find(['conditions' => 'id IN (' . implode(',', $cursoIds) . ')', 'order' => 'nombre ASC']) : [],
+                'secciones' => !empty($seccionIds) ? Seccion::find(['conditions' => 'id IN (' . implode(',', $seccionIds) . ')', 'order' => 'nombre ASC']) : [],
+                'semestres' => !empty($semestreIds) ? Semestre::find(['conditions' => 'id IN (' . implode(',', $semestreIds) . ')', 'order' => 'nombre ASC']) : [],
+            ];
+        }
+
+        return [
+            'cursos'    => Curso::find(['order' => 'nombre ASC']),
+            'secciones' => Seccion::find(['order' => 'nombre ASC']),
+            'semestres' => Semestre::find(['order' => 'nombre ASC']),
+        ];
     }
 
     private function prepararVistaEdicion(Nota $nota): void

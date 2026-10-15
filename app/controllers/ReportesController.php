@@ -29,8 +29,11 @@ class ReportesController extends BaseController
         $carreraIdRaw = $this->request->getQuery('carrera_id', null, '');
         $carreraId = is_numeric($carreraIdRaw) && (int) $carreraIdRaw > 0 ? (int) $carreraIdRaw : null;
 
+        $ordenarPor = strtolower((string) $this->request->getQuery('ordenar_por', 'string', 'apellidos'));
+        $direccion  = strtoupper((string) $this->request->getQuery('direccion', 'string', 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+
         $service = new ReporteService($this->db, (int) $this->config['app']['notaAprobacion']);
-        $alumnos = $service->alumnosPorCarrera($carreraId);
+        $alumnos = $service->alumnosPorCarrera($carreraId, $ordenarPor, $direccion);
 
         // Exportación si se solicita formato
         if ($formatoRaw !== null) {
@@ -64,6 +67,8 @@ class ReportesController extends BaseController
         $this->view->setVar('alumnos', $alumnos);
         $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
         $this->view->setVar('carreraId', $carreraId);
+        $this->view->setVar('ordenarPor', $ordenarPor);
+        $this->view->setVar('direccion', $direccion);
         $this->view->pick('reportes/alumnos-por-carrera');
     }
 
@@ -86,9 +91,12 @@ class ReportesController extends BaseController
         $seccionIdRaw = $this->request->getQuery('seccion_id', null, '');
         $seccionId = is_numeric($seccionIdRaw) && (int) $seccionIdRaw > 0 ? (int) $seccionIdRaw : null;
 
+        $ordenarPor = strtolower((string) $this->request->getQuery('ordenar_por', 'string', 'default'));
+        $direccion  = strtoupper((string) $this->request->getQuery('direccion', 'string', 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+
         $umbral = (int) $this->config['app']['notaAprobacion'];
         $service = new ReporteService($this->db, $umbral);
-        $filas = $service->notas($carreraId, $cursoId, $seccionId);
+        $filas = $service->notas($carreraId, $cursoId, $seccionId, $ordenarPor, $direccion);
 
         // Exportación si se solicita formato
         if ($formatoRaw !== null) {
@@ -153,6 +161,8 @@ class ReportesController extends BaseController
         $this->view->setVar('carreraId', $carreraId);
         $this->view->setVar('cursoId', $cursoId);
         $this->view->setVar('seccionId', $seccionId);
+        $this->view->setVar('ordenarPor', $ordenarPor);
+        $this->view->setVar('direccion', $direccion);
         $this->view->setVar('umbral', $umbral);
         $this->view->pick('reportes/notas');
     }

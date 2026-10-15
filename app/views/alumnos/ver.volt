@@ -1,26 +1,26 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
   <div>
     <h2 class="h3 fw-bold mb-1 text-dark">
       <i class="bi bi-person-badge text-primary me-2"></i>Ficha del Alumno
     </h2>
     <p class="text-muted small mb-0">Información personal e historial académico de notas</p>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2">
     {% if auth is defined and auth['rol'] == 'director' %}
-      <a href="{{ url('alumnos') }}" class="btn btn-outline-secondary btn-sm">
+      <a href="{{ url('alumnos')|e }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Volver
       </a>
     {% endif %}
-    <a href="{{ url('alumnos/' ~ alumno.id ~ '/ficha?formato=pdf') }}" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
+    <a href="{{ url('alumnos/' ~ alumno.id ~ '/ficha?formato=pdf')|e }}" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf me-1"></i>Descargar Ficha PDF
     </a>
     {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
-      <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva') }}" class="btn btn-success btn-sm">
+      <a href="{{ url('alumnos/' ~ alumno.id ~ '/notas/nueva')|e }}" class="btn btn-success btn-sm">
         <i class="bi bi-plus-circle me-1"></i>Ingresar Nota
       </a>
     {% endif %}
     {% if auth is defined and auth['rol'] == 'director' %}
-      <a href="{{ url('alumnos/' ~ alumno.id ~ '/editar') }}" class="btn btn-primary btn-sm">
+      <a href="{{ url('alumnos/' ~ alumno.id ~ '/editar')|e }}" class="btn btn-primary btn-sm">
         <i class="bi bi-pencil me-1"></i>Editar Datos
       </a>
     {% endif %}
@@ -32,7 +32,7 @@
     <div class="card shadow-sm border-0 text-center p-3">
       <div class="card-body">
         {% if alumno.foto is not empty %}
-          <img src="{{ url(alumno.foto) }}" alt="Fotografía" class="rounded-circle border shadow-sm mb-3" style="width: 140px; height: 140px; object-fit: cover;">
+          <img src="{{ url(alumno.foto)|e }}" alt="Fotografía" class="rounded-circle border shadow-sm mb-3" style="width: 140px; height: 140px; object-fit: cover;">
         {% else %}
           <div class="rounded-circle bg-secondary-subtle text-secondary d-inline-flex align-items-center justify-content-center border shadow-sm mb-3" style="width: 140px; height: 140px;">
             <i class="bi bi-person fs-1"></i>
@@ -124,13 +124,13 @@
               </td>
               <td class="text-end pe-4">
                 {% if auth is defined and (auth['rol'] == 'director' or auth['rol'] == 'profesor') %}
-                  <a href="{{ url('notas/' ~ h['id'] ~ '/editar') }}" class="btn btn-sm btn-outline-primary me-1" title="Editar Nota">
+                  <a href="{{ url('notas/' ~ h['id'] ~ '/editar')|e }}" class="btn btn-sm btn-outline-primary me-1" title="Editar Nota">
                     <i class="bi bi-pencil"></i>
                   </a>
                 {% endif %}
                 {% if auth is defined and auth['rol'] == 'director' %}
-                  <form action="{{ url('notas/' ~ h['id'] ~ '/eliminar') }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar esta nota?');">
-                    <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}">
+                  <form action="{{ url('notas/' ~ h['id'] ~ '/eliminar')|e }}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar esta nota?');">
+                    <input type="hidden" name="{{ security.getTokenKey()|e }}" value="{{ security.getToken()|e }}">
                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Nota">
                       <i class="bi bi-trash"></i>
                     </button>

@@ -1,18 +1,18 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
   <div>
     <h2 class="h3 fw-bold mb-1 text-dark">
       <i class="bi bi-card-checklist text-success me-2"></i>Reporte de Calificaciones
     </h2>
-    <p class="text-muted small mb-0">Filtro de notas por carrera, curso y sección</p>
+    <p class="text-muted small mb-0">Filtro de notas por carrera, curso y sección con ordenamiento dinámico</p>
   </div>
-  <div class="d-flex align-items-center gap-2">
-    <span class="badge bg-light text-dark border me-1">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <span class="badge bg-light text-dark border">
       Umbral: {{ umbral|e }} pts
     </span>
-    <a href="{{ url('reportes/notas') }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&formato=pdf" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
+    <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por={{ ordenarPor|default('default')|e }}&direccion={{ direccion|default('ASC')|e }}&formato=pdf" class="btn btn-outline-danger btn-sm shadow-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
     </a>
-    <a href="{{ url('reportes/notas') }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&formato=csv" class="btn btn-outline-success btn-sm shadow-sm">
+    <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por={{ ordenarPor|default('default')|e }}&direccion={{ direccion|default('ASC')|e }}&formato=csv" class="btn btn-outline-success btn-sm shadow-sm">
       <i class="bi bi-file-earmark-spreadsheet me-1"></i>Descargar CSV
     </a>
   </div>
@@ -20,9 +20,9 @@
 
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-body p-3">
-    <form method="get" action="{{ url('reportes/notas') }}" class="row g-2 align-items-center">
-      <div class="col-md-3">
-        <label class="form-label small text-muted mb-1">Carrera</label>
+    <form method="get" action="{{ url('reportes/notas')|e }}" class="row g-2 align-items-center">
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="form-label small text-muted fw-semibold mb-1">Carrera</label>
         <select name="carrera_id" class="form-select form-select-sm">
           <option value="">Todas las carreras</option>
           {% for c in carreras %}
@@ -33,8 +33,8 @@
         </select>
       </div>
 
-      <div class="col-md-3">
-        <label class="form-label small text-muted mb-1">Curso</label>
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="form-label small text-muted fw-semibold mb-1">Curso</label>
         <select name="curso_id" class="form-select form-select-sm">
           <option value="">Todos los cursos</option>
           {% for cu in cursos %}
@@ -45,10 +45,10 @@
         </select>
       </div>
 
-      <div class="col-md-3">
-        <label class="form-label small text-muted mb-1">Sección</label>
+      <div class="col-6 col-sm-6 col-md-2">
+        <label class="form-label small text-muted fw-semibold mb-1">Sección</label>
         <select name="seccion_id" class="form-select form-select-sm">
-          <option value="">Todas las secciones</option>
+          <option value="">Todas</option>
           {% for s in secciones %}
             <option value="{{ s.id|e }}" {% if seccionId == s.id %}selected{% endif %}>
               {{ s.nombre|e }}
@@ -57,9 +57,17 @@
         </select>
       </div>
 
-      <div class="col-md-3 d-flex align-items-end gap-2 pt-3">
+      <div class="col-6 col-sm-6 col-md-2">
+        <label class="form-label small text-muted fw-semibold mb-1">Sentido</label>
+        <select name="direccion" class="form-select form-select-sm">
+          <option value="ASC" {% if direccion == 'ASC' %}selected{% endif %}>Ascendente</option>
+          <option value="DESC" {% if direccion == 'DESC' %}selected{% endif %}>Descendente</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-2 d-flex align-items-end gap-2 pt-1 pt-md-0">
         <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Filtrar</button>
-        <a href="{{ url('reportes/notas') }}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+        <a href="{{ url('reportes/notas')|e }}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
       </div>
     </form>
   </div>
@@ -77,12 +85,37 @@
       <table class="table table-hover table-striped align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Carrera</th>
-            <th>Curso</th>
-            <th class="text-center">Sección</th>
+            <th>
+              <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por=carrera&direccion={% if ordenarPor == 'carrera' and direccion == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                Carrera
+                {% if ordenarPor == 'carrera' %}<i class="bi bi-arrow-{% if direccion == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por=curso&direccion={% if ordenarPor == 'curso' and direccion == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                Curso
+                {% if ordenarPor == 'curso' %}<i class="bi bi-arrow-{% if direccion == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
+            <th class="text-center">
+              <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por=seccion&direccion={% if ordenarPor == 'seccion' and direccion == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                Sección
+                {% if ordenarPor == 'seccion' %}<i class="bi bi-arrow-{% if direccion == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
             <th>Semestre</th>
-            <th>Alumno</th>
-            <th class="text-center">Nota</th>
+            <th>
+              <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por=alumno&direccion={% if ordenarPor == 'alumno' and direccion == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                Alumno
+                {% if ordenarPor == 'alumno' %}<i class="bi bi-arrow-{% if direccion == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
+            <th class="text-center">
+              <a href="{{ url('reportes/notas')|e }}?carrera_id={{ carreraId|default('')|e }}&curso_id={{ cursoId|default('')|e }}&seccion_id={{ seccionId|default('')|e }}&ordenar_por=nota&direccion={% if ordenarPor == 'nota' and direccion == 'ASC' %}DESC{% else %}ASC{% endif %}" class="text-dark text-decoration-none">
+                Nota
+                {% if ordenarPor == 'nota' %}<i class="bi bi-arrow-{% if direccion == 'ASC' %}up{% else %}down{% endif %} ms-1 text-primary"></i>{% endif %}
+              </a>
+            </th>
             <th class="text-center">Estado</th>
           </tr>
         </thead>
@@ -96,7 +129,7 @@
               <td class="text-center">{{ f['seccion']|e }}</td>
               <td class="text-muted small">{{ f['semestre']|e }}</td>
               <td>
-                <a href="{{ url('alumnos/' ~ f['alumno_id']) }}" class="text-decoration-none text-dark fw-semibold">
+                <a href="{{ url('alumnos/' ~ f['alumno_id'])|e }}" class="text-decoration-none text-dark fw-semibold">
                   {{ f['apellidos']|e }}, {{ f['nombres']|e }}
                 </a>
               </td>

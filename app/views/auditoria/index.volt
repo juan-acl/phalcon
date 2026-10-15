@@ -8,7 +8,7 @@
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-body">
     <form method="get" action="{{ url('auditoria')|e }}" class="row g-3 align-items-end">
-      <div class="col-md-3">
+      <div class="col-12 col-sm-6 col-lg-3">
         <label for="accion" class="form-label fw-semibold small text-muted">Acción</label>
         <select name="accion" id="accion" class="form-select">
           <option value="">-- Todas las acciones --</option>
@@ -18,30 +18,30 @@
         </select>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-12 col-sm-6 col-lg-3">
         <label for="alumno_id" class="form-label fw-semibold small text-muted">Alumno</label>
         <select name="alumno_id" id="alumno_id" class="form-select">
           <option value="0">-- Todos los alumnos --</option>
           {% for al in alumnos %}
             <option value="{{ al.id|e }}" {% if filtros['alumno_id'] == al.id %}selected{% endif %}>
-              {{ al.carnet|default('')|e }} - {{ al.apellidos|e }}, {{ al.nombres|e }}
+              {{ al.apellidos|e }}, {{ al.nombres|e }}
             </option>
           {% endfor %}
         </select>
       </div>
 
-      <div class="col-md-2">
+      <div class="col-6 col-sm-6 col-lg-2">
         <label for="fecha_desde" class="form-label fw-semibold small text-muted">Desde</label>
         <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" value="{{ filtros['fecha_desde']|e }}">
       </div>
 
-      <div class="col-md-2">
+      <div class="col-6 col-sm-6 col-lg-2">
         <label for="fecha_hasta" class="form-label fw-semibold small text-muted">Hasta</label>
         <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" value="{{ filtros['fecha_hasta']|e }}">
       </div>
 
-      <div class="col-md-2 d-flex gap-2">
-        <button type="submit" class="btn btn-primary w-100">
+      <div class="col-12 col-sm-12 col-lg-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">
           <i class="bi bi-funnel me-1"></i>Filtrar
         </button>
         <a href="{{ url('auditoria')|e }}" class="btn btn-outline-secondary" title="Limpiar filtros">
@@ -84,11 +84,14 @@
                 </td>
                 <td>
                   {% if aud.usuario %}
-                    <span class="badge bg-secondary-subtle text-secondary border">
-                      <i class="bi bi-person me-1"></i>{{ aud.usuario.email|e }}
+                    <span class="fw-semibold text-dark small d-block">
+                      <i class="bi bi-person-circle text-secondary me-1"></i>{{ aud.usuario.usuario|e }}
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary border small">
+                      {{ aud.usuario.rol|capitalize|e }}
                     </span>
                   {% else %}
-                    <span class="text-muted fst-italic">Sistema</span>
+                    <span class="badge bg-light text-muted border small">Sistema</span>
                   {% endif %}
                 </td>
                 <td>

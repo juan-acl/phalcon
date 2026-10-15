@@ -15,9 +15,17 @@ final class ReporteService
     {
     }
 
-    /** Alumnos por carrera; $carreraId opcional. */
-    public function alumnosPorCarrera(?int $carreraId = null): array
+    /** Alumnos por carrera; $carreraId opcional. Permite ordenamiento dinámico seguro. */
+    public function alumnosPorCarrera(?int $carreraId = null, string $ordenarPor = 'apellidos', string $direccion = 'ASC'): array
     {
+        $dir = strtoupper(trim($direccion)) === 'DESC' ? 'DESC' : 'ASC';
+        $ordenSql = match (strtolower(trim($ordenarPor))) {
+            'id'               => "a.id {$dir}",
+            'carrera'          => "c.nombre {$dir}, a.apellidos {$dir}, a.nombres {$dir}",
+            'fecha_nacimiento' => "a.fecha_nacimiento {$dir}, a.apellidos {$dir}",
+            default            => "a.apellidos {$dir}, a.nombres {$dir}",
+        };
+
         $sql = 'SELECT c.id AS carrera_id, c.nombre AS carrera, a.id, a.nombres, a.apellidos, a.fecha_nacimiento
                   FROM alumnos a JOIN carreras c ON c.id = a.carrera_id';
         $binds = [];
@@ -25,14 +33,24 @@ final class ReporteService
             $sql .= ' WHERE c.id = :carrera';
             $binds['carrera'] = $carreraId;
         }
-        $sql .= ' ORDER BY c.nombre, a.apellidos, a.nombres LIMIT 500';
+        $sql .= " ORDER BY {$ordenSql} LIMIT 500";
 
         return $this->db->fetchAll($sql, Enum::FETCH_ASSOC, $binds);
     }
 
-    /** Notas filtradas por carrera, curso y sección (cada filtro es opcional). */
-    public function notas(?int $carreraId = null, ?int $cursoId = null, ?int $seccionId = null): array
+    /** Notas filtradas por carrera, curso y sección con ordenamiento seguro. */
+    public function notas(?int $carreraId = null, ?int $cursoId = null, ?int $seccionId = null, string $ordenarPor = 'default', string $direccion = 'ASC'): array
     {
+        $dir = strtoupper(trim($direccion)) === 'DESC' ? 'DESC' : 'ASC';
+        $ordenSql = match (strtolower(trim($ordenarPor))) {
+            'nota'     => "n.nota {$dir}, a.apellidos ASC",
+            'alumno'   => "a.apellidos {$dir}, a.nombres {$dir}",
+            'curso'    => "cu.nombre {$dir}, s.nombre ASC, a.apellidos ASC",
+            'carrera'  => "c.nombre {$dir}, cu.nombre ASC, a.apellidos ASC",
+            'seccion'  => "s.nombre {$dir}, a.apellidos ASC",
+            default    => "c.nombre {$dir}, cu.nombre {$dir}, s.nombre {$dir}, a.apellidos {$dir}, a.nombres {$dir}",
+        };
+
         $sql = 'SELECT c.nombre AS carrera, cu.nombre AS curso, s.nombre AS seccion, sm.nombre AS semestre,
                        a.id AS alumno_id, a.nombres, a.apellidos, n.nota,
                        (n.nota >= :aprob) AS aprobado
@@ -49,7 +67,7 @@ final class ReporteService
         if ($cursoId)   { $sql .= ' AND cu.id = :curso';   $binds['curso']   = $cursoId; }
         if ($seccionId) { $sql .= ' AND s.id = :seccion';  $binds['seccion'] = $seccionId; }
 
-        $sql .= ' ORDER BY c.nombre, cu.nombre, s.nombre, a.apellidos, a.nombres LIMIT 500';
+        $sql .= " ORDER BY {$ordenSql} LIMIT 500";
 
         return $this->db->fetchAll($sql, Enum::FETCH_ASSOC, $binds);
     }
