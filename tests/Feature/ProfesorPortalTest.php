@@ -45,6 +45,7 @@ class ProfesorPortalTest extends HttpTestCase
             'cursoId'    => $cursoId,
             'seccionId'  => $seccionId,
             'semestreId' => $semestreId,
+            'carreraId'  => $carreraId,
         ];
     }
 
@@ -162,5 +163,46 @@ class ProfesorPortalTest extends HttpTestCase
         $this->loginComo('profesor', ['profesor_id' => $datos['profId']]);
         $resp = $this->get("/notas/{$notaAjenaId}/editar");
         $this->assertSame(404, $resp->getStatusCode(), 'Editar nota de un curso que no imparte debe responder 404');
+    }
+
+    public function test_profesor_en_buscar_notas_solo_ve_sus_alumnos(): void
+    {
+        $datos = $this->crearDatosPruebaProfesor();
+
+        // Alumno ajeno no inscrito con este profesor
+        $alumnoAjenoId = $this->insertar('alumnos', [
+            'nombres'          => 'Alumno',
+            'apellidos'        => 'AjenoDesconocido',
+            'fecha_nacimiento' => '2008-01-01',
+            'carrera_id'       => $datos['carreraId'],
+        ]);
+
+        $this->loginComo('profesor', ['profesor_id' => $datos['profId']]);
+        $resp = $this->get('/notas/buscar');
+        $this->assertSame(200, $resp->getStatusCode());
+        $body = (string) $resp->getBody();
+
+        // Debe ver a su alumno inscrito pero NO al alumno ajeno
+        $this->assertStringContainsString('Quimica', $body);
+        $this->assertStringNotContainsString('AjenoDesconocido', $body);
+    }
+
+    public function test_profesor_no_puede_ingresar_nota_en_curso_no_asignado(): void
+    {
+        $datos = $this->crearDatosPruebaProfesor();
+        $otroCursoId = $this->insertar('cursos', ['nombre' => 'Física No Asignada']);
+
+        $this->loginComo('profesor', ['profesor_id' => $datos['profId']]);
+        $resp = $this->submit("/alumnos/{$datos['alumnoId']}/notas/nueva", [
+            'curso_id'    => $otroCursoId,
+            'seccion_id'  => $datos['seccionId'],
+            'semestre_id' => $datos['semestreId'],
+            'nota'        => '80',
+            'estado'      => 'publicada',
+        ]);
+
+        $this->assertSame(422, $resp->getStatusCode());
+        $this->assertStringContainsString('Usted no tiene asignada esta asignatura', (string) $resp->getBody());
+        $this->assertSame(0, $this->contar('notas', "curso_id = {$otroCursoId}"));
     }
 }
