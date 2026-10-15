@@ -8,7 +8,8 @@
       </div>
       <div class="card-body p-4">
         {% if errores is defined and errores|length > 0 %}
-          <div class="alert alert-danger" role="alert">
+          <div class="alert alert-danger shadow-sm" role="alert">
+            <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Por favor verifique los siguientes datos requeridos:</div>
             <ul class="mb-0 ps-3">
               {% for err in errores %}
                 <li>{{ err|e }}</li>

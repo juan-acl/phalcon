@@ -84,8 +84,22 @@ class InscripcionesController extends BaseController
             'clase_id'  => $claseId,
         ], ['alumno_id', 'clase_id']);
 
-        if (!$insc->save()) {
-            $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($insc->getMessages())), $datos);
+        try {
+            if (!$insc->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($insc->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo registrar la inscripción.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('alumnos', Alumno::find(['order' => 'apellidos ASC, nombres ASC']));
+                $this->view->setVar('clases', Clase::find(['order' => 'semestre_id DESC, curso_id ASC']));
+                $this->view->setVar('claseIdDefecto', $claseId);
+                $this->view->pick('inscripciones/nueva');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al crear inscripción: ' . $e->getMessage());
+            $this->conErrores(['El alumno ya se encuentra inscrito en esta clase o los datos son inválidos.'], $datos);
             $this->view->setVar('alumnos', Alumno::find(['order' => 'apellidos ASC, nombres ASC']));
             $this->view->setVar('clases', Clase::find(['order' => 'semestre_id DESC, curso_id ASC']));
             $this->view->setVar('claseIdDefecto', $claseId);
@@ -107,10 +121,15 @@ class InscripcionesController extends BaseController
         }
 
         $claseId = (int) $insc->clase_id;
-        if (!$insc->delete()) {
-            $this->flashSession->error('No se pudo anular la inscripción.');
-        } else {
-            $this->flashSession->success('Inscripción anulada correctamente.');
+        try {
+            if (!$insc->delete()) {
+                $this->flashSession->error('No se pudo anular la inscripción. Verifique si el estudiante tiene notas registradas en esta clase.');
+            } else {
+                $this->flashSession->success('Inscripción anulada correctamente.');
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al anular inscripción: ' . $e->getMessage());
+            $this->flashSession->error('No se puede anular la inscripción porque el estudiante ya cuenta con calificaciones registradas en esta clase.');
         }
 
         return $this->irA('inscripciones?clase_id=' . $claseId);

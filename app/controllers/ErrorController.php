@@ -22,4 +22,9 @@ class ErrorController extends Controller
         $this->response->setStatusCode(401, 'Unauthorized');
         $this->response->setHeader('WWW-Authenticate', 'Basic realm="Sistema escolar"');
     }
+
+    public function serverErrorAction(): void
+    {
+        $this->response->setStatusCode(500, 'Internal Server Error');
+    }
 }

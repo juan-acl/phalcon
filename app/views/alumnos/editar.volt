@@ -10,8 +10,9 @@
     </div>
 
     {% if errores is not empty %}
-      <div class="alert alert-danger mb-3">
-        <ul class="mb-0">
+      <div class="alert alert-danger mb-3 shadow-sm" role="alert">
+        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-circle-fill me-2"></i>Por favor verifique los siguientes datos requeridos:</div>
+        <ul class="mb-0 ps-3">
           {% for e in errores %}
             <li>{{ e|e }}</li>
           {% endfor %}

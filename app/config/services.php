@@ -30,7 +30,28 @@ $di->setShared('router', function () {
 
 // ---- Dispatcher ----
 $di->setShared('dispatcher', function () {
+    $eventsManager = new EventsManager();
+    $eventsManager->attach('dispatch:beforeException', function (Event $event, Dispatcher $dispatcher, \Throwable $exception) {
+        error_log('Dispatcher Exception: ' . $exception->getMessage());
+        switch ($exception->getCode()) {
+            case \Phalcon\Mvc\Dispatcher\Exception::EXCEPTION_HANDLER_NOT_FOUND:
+            case \Phalcon\Mvc\Dispatcher\Exception::EXCEPTION_ACTION_NOT_FOUND:
+            case \Phalcon\Mvc\Dispatcher\Exception::EXCEPTION_INVALID_HANDLER:
+                $dispatcher->forward([
+                    'controller' => 'error',
+                    'action'     => 'notFound',
+                ]);
+                return false;
+        }
+        $dispatcher->forward([
+            'controller' => 'error',
+            'action'     => 'serverError',
+        ]);
+        return false;
+    });
+
     $dispatcher = new Dispatcher();
+    $dispatcher->setEventsManager($eventsManager);
     $dispatcher->setDefaultNamespace('App\\Controllers');
     return $dispatcher;
 });

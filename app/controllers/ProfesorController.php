@@ -302,9 +302,10 @@ class ProfesorController extends BaseController
 
             $db->commit();
             $this->flashSession->success("Se guardaron {$guardadas} notas como borrador.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            $this->flashSession->error('Error al guardar notas: ' . $e->getMessage());
+            error_log('Error al guardar notas de profesor: ' . $e->getMessage());
+            $this->flashSession->error('No se pudieron guardar las notas. Verifique que todas las calificaciones ingresadas sean números válidos entre 0 y 100.');
         }
 
         return $this->irA('profesor/clases/' . $id);
@@ -386,9 +387,10 @@ class ProfesorController extends BaseController
 
             $db->commit();
             $this->flashSession->success("Se publicaron exitosamente {$publicadas} calificaciones. Ahora son visibles para los alumnos.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            $this->flashSession->error('Error al publicar calificaciones: ' . $e->getMessage());
+            error_log('Error al publicar calificaciones: ' . $e->getMessage());
+            $this->flashSession->error('No se pudieron publicar las calificaciones. Verifique el estado de la clase y del semestre e inténtelo de nuevo.');
         }
 
         return $this->irA('profesor/clases/' . $id);

@@ -22,11 +22,17 @@ class CuentaController extends BaseController
         $confirmacion = (string) $this->request->getPost('password_confirmacion', 'string', '');
 
         $errores = [];
-        if ($actual === '' || $nueva === '' || $confirmacion === '') {
-            $errores[] = 'Todos los campos de contraseña son requeridos.';
+        if ($actual === '') {
+            $errores[] = 'Debe ingresar su contraseña actual';
+        }
+        if ($nueva === '') {
+            $errores[] = 'Debe ingresar la nueva contraseña';
         } elseif (strlen($nueva) < 8) {
             $errores[] = 'La nueva contraseña debe contener al menos 8 caracteres.';
-        } elseif ($nueva !== $confirmacion) {
+        }
+        if ($confirmacion === '') {
+            $errores[] = 'Debe confirmar la nueva contraseña';
+        } elseif ($nueva !== '' && $nueva !== $confirmacion) {
             $errores[] = 'La confirmación de la contraseña no coincide.';
         }
 

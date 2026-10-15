@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Clase;
 use App\Models\Curso;
+use App\Models\Inscripcion;
 use App\Models\Profesor;
 use App\Models\Seccion;
 use App\Models\Semestre;
@@ -68,16 +69,28 @@ class ClasesController extends BaseController
             return;
         }
 
-        $clase = new Clase();
-        $clase->assign([
-            'curso_id'    => $cursoId,
-            'seccion_id'  => $seccionId,
-            'semestre_id' => $semestreId,
-            'profesor_id' => $profesorId ? (int) $profesorId : null,
-        ], ['curso_id', 'seccion_id', 'semestre_id', 'profesor_id']);
+        try {
+            $clase = new Clase();
+            $clase->assign([
+                'curso_id'    => $cursoId,
+                'seccion_id'  => $seccionId,
+                'semestre_id' => $semestreId,
+                'profesor_id' => $profesorId ? (int) $profesorId : null,
+            ], ['curso_id', 'seccion_id', 'semestre_id', 'profesor_id']);
 
-        if (!$clase->save()) {
-            $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($clase->getMessages())), $datos);
+            if (!$clase->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($clase->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo registrar la clase. Verifique los campos obligatorios.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->prepararCatalogos();
+                $this->view->pick('clases/nueva');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al crear clase: ' . $e->getMessage());
+            $this->conErrores(['No se pudo registrar la clase porque ya existe una clase registrada con ese curso, sección y semestre.'], $datos);
             $this->prepararCatalogos();
             $this->view->pick('clases/nueva');
             return;
@@ -120,7 +133,7 @@ class ClasesController extends BaseController
         }
 
         if ($profesorId !== null && !Profesor::findFirstById((int) $profesorId)) {
-            $this->conErrores(['El docente seleccionado no existe']);
+            $this->conErrores(['El docente seleccionado no existe en el sistema']);
             $this->prepararCatalogos();
             $this->view->setVar('clase', $clase);
             $this->view->pick('clases/editar');
@@ -128,8 +141,21 @@ class ClasesController extends BaseController
         }
 
         $clase->profesor_id = $profesorId ? (int) $profesorId : null;
-        if (!$clase->save()) {
-            $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($clase->getMessages())));
+        try {
+            if (!$clase->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($clase->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo actualizar el docente de la clase.'];
+                }
+                $this->conErrores($mensajes);
+                $this->prepararCatalogos();
+                $this->view->setVar('clase', $clase);
+                $this->view->pick('clases/editar');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al actualizar clase: ' . $e->getMessage());
+            $this->conErrores(['No se pudo actualizar la clase. Verifique los datos ingresados.']);
             $this->prepararCatalogos();
             $this->view->setVar('clase', $clase);
             $this->view->pick('clases/editar');
@@ -149,10 +175,21 @@ class ClasesController extends BaseController
             return;
         }
 
-        if (!$clase->delete()) {
-            $this->flashSession->error('No se pudo eliminar la clase.');
-        } else {
-            $this->flashSession->success('Clase eliminada correctamente.');
+        $cantInscritos = Inscripcion::count(['conditions' => 'clase_id = :id:', 'bind' => ['id' => $id]]);
+        if ($cantInscritos > 0) {
+            $this->flashSession->error("No se puede eliminar la clase porque tiene {$cantInscritos} estudiante(s) inscrito(s). Debe anular las inscripciones primero.");
+            return $this->irA('clases');
+        }
+
+        try {
+            if (!$clase->delete()) {
+                $this->flashSession->error('No se pudo eliminar la clase. Verifique si tiene calificaciones asociadas.');
+            } else {
+                $this->flashSession->success('Clase eliminada correctamente.');
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al eliminar clase: ' . $e->getMessage());
+            $this->flashSession->error('No se puede eliminar la clase porque cuenta con registros académicos o notas asociadas.');
         }
 
         return $this->irA('clases');

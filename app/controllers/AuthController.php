@@ -16,7 +16,14 @@ class AuthController extends BaseController
         $password   = (string) $this->request->getPost('password', 'string', '');
 
         if ($usuarioTxt === '' || $password === '') {
-            $this->conErrores(['Ingrese usuario y contraseña.'], ['usuario' => $usuarioTxt]);
+            $errores = [];
+            if ($usuarioTxt === '') {
+                $errores[] = 'Por favor ingrese su nombre de usuario';
+            }
+            if ($password === '') {
+                $errores[] = 'Por favor ingrese su contraseña';
+            }
+            $this->conErrores($errores, ['usuario' => $usuarioTxt]);
             return;
         }
 

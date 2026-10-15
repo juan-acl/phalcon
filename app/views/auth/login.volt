@@ -13,7 +13,8 @@
         {% endif %}
 
         {% if errores is defined and errores|length > 0 %}
-          <div class="alert alert-danger" role="alert">
+          <div class="alert alert-danger shadow-sm" role="alert">
+            <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> No se pudo iniciar sesión:</div>
             <ul class="mb-0 ps-3">
               {% for err in errores %}
                 <li>{{ err|e }}</li>

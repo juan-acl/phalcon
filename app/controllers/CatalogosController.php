@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Alumno;
 use App\Models\Carrera;
+use App\Models\Clase;
 use App\Models\Curso;
 use App\Models\Nota;
 use App\Models\Seccion;
@@ -186,9 +187,23 @@ class CatalogosController extends BaseController
         $modelo = new $clase();
         $modelo->assign($datos, ['nombre']); // lista blanca segura
 
-        if (!$modelo->save()) {
-            $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($modelo->getMessages()));
-            $this->conErrores($mensajes, $datos);
+        $singularMin = mb_strtolower((string) $meta['singular'], 'UTF-8');
+
+        try {
+            if (!$modelo->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($modelo->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ["No se pudo registrar {$meta['articulo']} {$singularMin}. Verifique los datos ingresados."];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('tipo', $tipo);
+                $this->view->setVar('meta', $meta);
+                $this->view->pick('catalogos/nuevo');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log("Error al crear {$tipo}: " . $e->getMessage());
+            $this->conErrores(["No se pudo registrar {$meta['articulo']} {$singularMin}. Es posible que el nombre ya esté en uso o contenga caracteres no permitidos."], $datos);
             $this->view->setVar('tipo', $tipo);
             $this->view->setVar('meta', $meta);
             $this->view->pick('catalogos/nuevo');
@@ -288,9 +303,22 @@ class CatalogosController extends BaseController
 
         $item->assign($datos, ['nombre']); // lista blanca segura
 
-        if (!$item->save()) {
-            $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($item->getMessages()));
-            $this->conErrores($mensajes, $datos);
+        try {
+            if (!$item->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($item->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ["No se pudo actualizar {$meta['articulo']} {$singularMin}."];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('tipo', $tipo);
+                $this->view->setVar('meta', $meta);
+                $this->view->setVar('item', $item);
+                $this->view->pick('catalogos/editar');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log("Error al actualizar {$tipo}: " . $e->getMessage());
+            $this->conErrores(["No se pudo actualizar {$meta['articulo']} {$singularMin}. El nombre ya se encuentra en uso por otro registro."], $datos);
             $this->view->setVar('tipo', $tipo);
             $this->view->setVar('meta', $meta);
             $this->view->setVar('item', $item);
@@ -319,30 +347,49 @@ class CatalogosController extends BaseController
             return;
         }
 
-        // Verificación de integridad referencial
-        $enUso = match ($tipo) {
-            'carreras'  => Alumno::count(['conditions' => 'carrera_id = :id:', 'bind' => ['id' => $id]]) > 0,
-            'cursos'    => Nota::count(['conditions' => 'curso_id = :id:', 'bind' => ['id' => $id]]) > 0,
-            'secciones' => Nota::count(['conditions' => 'seccion_id = :id:', 'bind' => ['id' => $id]]) > 0,
-            'semestres' => Nota::count(['conditions' => 'semestre_id = :id:', 'bind' => ['id' => $id]]) > 0,
-            default     => false,
-        };
-
         $singularMin = mb_strtolower((string) $meta['singular'], 'UTF-8');
 
-        if ($enUso) {
-            $this->flashSession->error("No se puede eliminar {$meta['articulo']} {$singularMin} porque tiene registros relacionados en uso.");
+        // Verificación de integridad referencial con motivos detallados
+        $motivoEnUso = null;
+        if ($tipo === 'carreras') {
+            $cant = Alumno::count(['conditions' => 'carrera_id = :id:', 'bind' => ['id' => $id]]);
+            if ($cant > 0) {
+                $motivoEnUso = "No se puede eliminar la carrera porque tiene {$cant} estudiante(s) matriculado(s) en ella.";
+            }
+        } elseif ($tipo === 'cursos') {
+            $cantClases = Clase::count(['conditions' => 'curso_id = :id:', 'bind' => ['id' => $id]]);
+            $cantNotas  = Nota::count(['conditions' => 'curso_id = :id:', 'bind' => ['id' => $id]]);
+            if ($cantClases > 0 || $cantNotas > 0) {
+                $motivoEnUso = 'No se puede eliminar el curso porque está asignado a clases académicas o tiene calificaciones registradas.';
+            }
+        } elseif ($tipo === 'secciones') {
+            $cantClases = Clase::count(['conditions' => 'seccion_id = :id:', 'bind' => ['id' => $id]]);
+            $cantNotas  = Nota::count(['conditions' => 'seccion_id = :id:', 'bind' => ['id' => $id]]);
+            if ($cantClases > 0 || $cantNotas > 0) {
+                $motivoEnUso = 'No se puede eliminar la sección porque está vinculada a clases activas o notas de alumnos.';
+            }
+        } elseif ($tipo === 'semestres') {
+            $cantClases = Clase::count(['conditions' => 'semestre_id = :id:', 'bind' => ['id' => $id]]);
+            $cantNotas  = Nota::count(['conditions' => 'semestre_id = :id:', 'bind' => ['id' => $id]]);
+            if ($cantClases > 0 || $cantNotas > 0) {
+                $motivoEnUso = 'No se puede eliminar el semestre porque contiene clases o notas académicas registradas.';
+            }
+        }
+
+        if ($motivoEnUso !== null) {
+            $this->flashSession->error($motivoEnUso);
             return $this->irA("catalogos/{$tipo}");
         }
 
         try {
             if (!$item->delete()) {
-                $this->flashSession->error("No se puede eliminar {$meta['articulo']} {$singularMin}: está en uso.");
+                $this->flashSession->error("No se puede eliminar {$meta['articulo']} {$singularMin}: tiene registros relacionados en uso.");
             } else {
                 $this->flashSession->success("{$meta['singular']} eliminada correctamente.");
             }
         } catch (\Throwable $e) {
-            $this->flashSession->error("No se puede eliminar {$meta['articulo']} {$singularMin}: está en uso por otros datos.");
+            error_log("Error al eliminar {$tipo}: " . $e->getMessage());
+            $this->flashSession->error("No se puede eliminar {$meta['articulo']} {$singularMin} porque tiene registros relacionados en uso.");
         }
 
         return $this->irA("catalogos/{$tipo}");

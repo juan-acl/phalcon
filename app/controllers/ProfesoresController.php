@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\Clase;
 use App\Models\Profesor;
 use App\Models\Usuario;
 
@@ -84,7 +85,11 @@ class ProfesoresController extends BaseController
 
             if (!$profesor->save()) {
                 $db->rollback();
-                $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($profesor->getMessages())), $datos);
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($profesor->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo registrar la información del docente.'];
+                }
+                $this->conErrores($mensajes, $datos);
                 $this->view->pick('profesores/nuevo');
                 return;
             }
@@ -101,15 +106,22 @@ class ProfesoresController extends BaseController
 
             if (!$usuario->save()) {
                 $db->rollback();
-                $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($usuario->getMessages())), $datos);
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($usuario->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo crear la cuenta de usuario para el docente.'];
+                }
+                $this->conErrores($mensajes, $datos);
                 $this->view->pick('profesores/nuevo');
                 return;
             }
 
             $db->commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            throw $e;
+            error_log('Error al crear docente: ' . $e->getMessage());
+            $this->conErrores(['No fue posible registrar al docente debido a un conflicto con el usuario o correo ingresados.'], $datos);
+            $this->view->pick('profesores/nuevo');
+            return;
         }
 
         $this->flashSession->success('Docente y usuario de acceso creados correctamente.');
@@ -159,15 +171,15 @@ class ProfesoresController extends BaseController
         if ($apellidos === '') { $errores[] = 'Los apellidos son obligatorios'; }
 
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errores[] = 'El formato del correo electrónico es inválido';
+            $errores[] = 'El formato del correo electrónico es inválido (ejemplo: docente@escuela.edu)';
         }
 
         if ($email !== '' && empty($errores)) {
-            $existe = Profesor::findFirst([
+            $existeE = Profesor::findFirst([
                 'conditions' => 'email = :e: AND id != :id:',
                 'bind'       => ['e' => $email, 'id' => $id],
             ]);
-            if ($existe) {
+            if ($existeE) {
                 $errores[] = 'El correo electrónico ya está registrado con otro docente';
             }
         }
@@ -185,8 +197,20 @@ class ProfesoresController extends BaseController
             'email'     => $email !== '' ? $email : null,
         ], ['nombres', 'apellidos', 'email']);
 
-        if (!$profesor->save()) {
-            $this->conErrores(array_map(fn($m) => $m->getMessage(), iterator_to_array($profesor->getMessages())), $datos);
+        try {
+            if (!$profesor->save()) {
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($profesor->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo actualizar la información del docente.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('profesor', $profesor);
+                $this->view->pick('profesores/editar');
+                return;
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al actualizar docente: ' . $e->getMessage());
+            $this->conErrores(['No se pudo actualizar el docente. Es posible que el correo electrónico ya esté asignado a otro docente.'], $datos);
             $this->view->setVar('profesor', $profesor);
             $this->view->pick('profesores/editar');
             return;
@@ -205,10 +229,21 @@ class ProfesoresController extends BaseController
             return;
         }
 
-        if (!$profesor->delete()) {
-            $this->flashSession->error('No se pudo eliminar el docente.');
-        } else {
-            $this->flashSession->success('Docente y usuario asociado eliminados correctamente.');
+        $cantClases = Clase::count(['conditions' => 'profesor_id = :id:', 'bind' => ['id' => $id]]);
+        if ($cantClases > 0) {
+            $this->flashSession->error("No se puede eliminar al docente porque tiene {$cantClases} clase(s) asignada(s). Debe reasignar o retirar sus clases antes de darlo de baja.");
+            return $this->irA('profesores');
+        }
+
+        try {
+            if (!$profesor->delete()) {
+                $this->flashSession->error('No se pudo eliminar el docente. Verifique si tiene dependencias en otros módulos.');
+            } else {
+                $this->flashSession->success('Docente y usuario asociado eliminados correctamente.');
+            }
+        } catch (\Throwable $e) {
+            error_log('Error al eliminar profesor: ' . $e->getMessage());
+            $this->flashSession->error('No se puede eliminar al docente porque cuenta con actividades académicas o calificaciones asociadas.');
         }
 
         return $this->irA('profesores');

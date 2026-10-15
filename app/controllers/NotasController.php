@@ -288,11 +288,15 @@ class NotasController extends BaseController
             if (!$nota->save()) {
                 $db->rollback();
                 $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($nota->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo registrar la calificación. Verifique los campos obligatorios.'];
+                }
                 $this->conErrores($mensajes, $datos);
+                $opciones = $this->opcionesFormularioNueva($alumnoId);
                 $this->view->setVar('alumno', $alumno);
-                $this->view->setVar('cursos', Curso::find(['order' => 'nombre ASC']));
-                $this->view->setVar('semestres', Semestre::find(['order' => 'nombre ASC']));
-                $this->view->setVar('secciones', Seccion::find(['order' => 'nombre ASC']));
+                $this->view->setVar('cursos', $opciones['cursos']);
+                $this->view->setVar('semestres', $opciones['semestres']);
+                $this->view->setVar('secciones', $opciones['secciones']);
                 $this->view->pick('notas/nueva');
                 return;
             }
@@ -313,9 +317,17 @@ class NotasController extends BaseController
             $auditoria->save();
 
             $db->commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            throw $e;
+            error_log('Error al guardar nota: ' . $e->getMessage());
+            $this->conErrores(['No se pudo guardar la calificación debido a que ya existe una nota para este estudiante en el curso y semestre seleccionados.'], $datos);
+            $opciones = $this->opcionesFormularioNueva($alumnoId);
+            $this->view->setVar('alumno', $alumno);
+            $this->view->setVar('cursos', $opciones['cursos']);
+            $this->view->setVar('semestres', $opciones['semestres']);
+            $this->view->setVar('secciones', $opciones['secciones']);
+            $this->view->pick('notas/nueva');
+            return;
         }
 
         $this->flashSession->success('Nota registrada correctamente.');
@@ -460,6 +472,9 @@ class NotasController extends BaseController
             if (!$nota->save()) {
                 $db->rollback();
                 $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($nota->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo actualizar la calificación. Verifique que los campos requeridos sean válidos.'];
+                }
                 $this->conErrores($mensajes, $datos);
                 $this->prepararVistaEdicion($nota);
                 return;
@@ -481,9 +496,12 @@ class NotasController extends BaseController
             $auditoria->save();
 
             $db->commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            throw $e;
+            error_log('Error al actualizar nota: ' . $e->getMessage());
+            $this->conErrores(['No se pudo actualizar la calificación. Verifique los datos ingresados e intente nuevamente.'], $datos);
+            $this->prepararVistaEdicion($nota);
+            return;
         }
 
         $this->flashSession->success('Nota actualizada y registrada en la auditoría correctamente.');
@@ -533,14 +551,16 @@ class NotasController extends BaseController
 
             if (!$nota->delete()) {
                 $db->rollback();
-                $this->flashSession->error('No se pudo eliminar la nota.');
+                $this->flashSession->error('No se pudo eliminar la nota del sistema.');
                 return $this->irA('alumnos/' . $alumnoId);
             }
 
             $db->commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $db->rollback();
-            throw $e;
+            error_log('Error al eliminar nota: ' . $e->getMessage());
+            $this->flashSession->error('No fue posible eliminar la calificación debido a restricciones de integridad con registros asociados.');
+            return $this->irA('alumnos/' . $alumnoId);
         }
 
         $this->flashSession->success('Nota eliminada y registrada en auditoría correctamente.');

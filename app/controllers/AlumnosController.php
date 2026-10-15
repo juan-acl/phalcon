@@ -6,6 +6,7 @@ use App\Library\Reportes\ReporteService;
 use App\Library\Uploads\FotoUploader;
 use App\Models\Alumno;
 use App\Models\Carrera;
+use App\Models\Nota;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Date;
 use Phalcon\Filter\Validation\Validator\PresenceOf;
@@ -141,12 +142,26 @@ class AlumnosController extends BaseController
         $alumno->assign($datos, ['nombres', 'apellidos', 'fecha_nacimiento', 'carrera_id']); // lista blanca
         $alumno->foto = $rutaFoto;
 
-        if (!$alumno->save()) {
+        try {
+            if (!$alumno->save()) {
+                if ($rutaFoto) {
+                    $uploader->eliminar($rutaFoto);
+                }
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($alumno->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo registrar al alumno. Verifique que los campos obligatorios estén completos.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
+                $this->view->pick('alumnos/nuevo');
+                return;
+            }
+        } catch (\Throwable $e) {
             if ($rutaFoto) {
                 $uploader->eliminar($rutaFoto);
             }
-            $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($alumno->getMessages()));
-            $this->conErrores($mensajes, $datos);
+            error_log('Error al crear alumno: ' . $e->getMessage());
+            $this->conErrores(['No se pudo registrar al alumno debido a un conflicto con los datos ingresados.'], $datos);
             $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
             $this->view->pick('alumnos/nuevo');
             return;
@@ -393,12 +408,27 @@ class AlumnosController extends BaseController
             $alumno->foto = $nuevaFoto;
         }
 
-        if (!$alumno->save()) {
+        try {
+            if (!$alumno->save()) {
+                if ($nuevaFoto) {
+                    $uploader->eliminar($nuevaFoto);
+                }
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($alumno->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo actualizar al alumno. Verifique que los campos requeridos estén completos.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('alumno', $alumno);
+                $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
+                $this->view->pick('alumnos/editar');
+                return;
+            }
+        } catch (\Throwable $e) {
             if ($nuevaFoto) {
                 $uploader->eliminar($nuevaFoto);
             }
-            $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($alumno->getMessages()));
-            $this->conErrores($mensajes, $datos);
+            error_log('Error al actualizar alumno: ' . $e->getMessage());
+            $this->conErrores(['No se pudo actualizar al alumno. Verifique la información ingresada.'], $datos);
             $this->view->setVar('alumno', $alumno);
             $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
             $this->view->pick('alumnos/editar');
@@ -429,13 +459,18 @@ class AlumnosController extends BaseController
 
         $foto = $alumno->foto;
 
-        if (!$alumno->delete()) {
-            $this->flashSession->error('No se pudo eliminar al alumno.');
-        } else {
-            if ($foto) {
-                (new FotoUploader($this->config['app']['uploadsDir']))->eliminar($foto);
+        try {
+            if (!$alumno->delete()) {
+                $this->flashSession->error('No se pudo eliminar al alumno. Verifique si tiene dependencias asociadas.');
+            } else {
+                if ($foto) {
+                    (new FotoUploader($this->config['app']['uploadsDir']))->eliminar($foto);
+                }
+                $this->flashSession->success('Alumno eliminado correctamente.');
             }
-            $this->flashSession->success('Alumno eliminado correctamente.');
+        } catch (\Throwable $e) {
+            error_log('Error al eliminar alumno: ' . $e->getMessage());
+            $this->flashSession->error('No se puede eliminar al alumno porque cuenta con notas o registros académicos en uso.');
         }
 
         return $this->irA('alumnos');
