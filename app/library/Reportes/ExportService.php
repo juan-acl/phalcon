@@ -87,6 +87,13 @@ class ExportService
         $dompdf->setPaper('letter', $orientacion);
         $dompdf->render();
 
+        // Numeración de páginas institucional en canvas
+        $canvas = $dompdf->getCanvas();
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
+        $ancho = $orientacion === 'landscape' ? 792 : 612;
+        $alto = $orientacion === 'landscape' ? 612 : 792;
+        $canvas->page_text($ancho - 95, $alto - 25, "Pág. {PAGE_NUM} de {PAGE_COUNT}", $font, 7.5, [0.39, 0.45, 0.55]);
+
         $salida = $dompdf->output();
 
         $seguroNombre = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $nombreBase);

@@ -46,6 +46,13 @@ abstract class HttpTestCase extends TestCase
         );
         $this->pdo->exec(file_get_contents($this->raiz . '/database/schema.sql'));
 
+        // Limpiar archivos subidos en pruebas previas para aislamiento total
+        foreach (glob($this->raiz . '/public/uploads/*') ?: [] as $archivoUpload) {
+            if (!str_starts_with(basename($archivoUpload), '.')) {
+                @unlink($archivoUpload);
+            }
+        }
+
         $this->http = new Client([
             'base_uri'        => getenv('TEST_BASE_URL') ?: 'http://127.0.0.1:8081',
             'cookies'         => new CookieJar(),

@@ -6,9 +6,6 @@
   <style>
     @page {
       margin: 18mm 15mm 20mm 15mm;
-      @bottom-right {
-        content: "Página " counter(page) " de " counter(pages);
-      }
     }
     body {
       font-family: 'DejaVu Sans', sans-serif;
@@ -241,24 +238,33 @@
     /* Pie de página */
     .footer {
       position: fixed;
-      bottom: -14mm;
+      bottom: -10mm;
       left: 0;
       right: 0;
-      height: 9mm;
-      font-size: 7.5px;
-      color: #64748b;
+      height: 8mm;
       border-top: 0.8px solid #cbd5e1;
       padding-top: 3px;
     }
+    .footer-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+    }
+    .footer-table td {
+      border: none;
+      padding: 0;
+      font-size: 7.5px;
+      color: #64748b;
+    }
     .footer-left {
-      float: left;
-      width: 70%;
       text-align: left;
+      width: 72%;
     }
     .footer-right {
-      float: right;
-      width: 30%;
       text-align: right;
+      width: 28%;
+      padding-right: 55pt;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -266,12 +272,16 @@
 
   <!-- Pie de página fijo -->
   <div class="footer">
-    <div class="footer-left">
-      Sistema de Control y Registro Escolar &bull; Expediente Académico del Estudiante &bull; República de Guatemala
-    </div>
-    <div class="footer-right">
-      Emisión: {{ fechaHora|e }}
-    </div>
+    <table class="footer-table">
+      <tr>
+        <td class="footer-left">
+          Sistema de Control y Registro Escolar &bull; Expediente Académico del Estudiante &bull; República de Guatemala
+        </td>
+        <td class="footer-right">
+          Emisión: {{ fechaHora|e }}
+        </td>
+      </tr>
+    </table>
   </div>
 
   <!-- Membrete oficial -->
