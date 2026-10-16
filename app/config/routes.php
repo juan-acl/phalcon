@@ -10,6 +10,7 @@ $router->addGet('/', ['controller' => 'index', 'action' => 'index']);
 // ---- Alumnos ----
 $router->addGet('/alumnos', ['controller' => 'alumnos', 'action' => 'index']);
 $router->addGet('/alumnos/nuevo', ['controller' => 'alumnos', 'action' => 'nuevo']);
+$router->addPost('/alumnos/nuevo', ['controller' => 'alumnos', 'action' => 'crear']);
 $router->addPost('/alumnos/crear', ['controller' => 'alumnos', 'action' => 'crear']);
 $router->addGet('/alumnos/{id:[0-9]+}', ['controller' => 'alumnos', 'action' => 'ver']);
 $router->addGet('/alumnos/{id:[0-9]+}/ficha', ['controller' => 'alumnos', 'action' => 'ficha']);

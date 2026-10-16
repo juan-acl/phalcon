@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Library\Reportes\ReporteService;
+use App\Library\Security\InputValidator;
 use App\Library\Uploads\FotoUploader;
 use App\Models\Alumno;
 use App\Models\Carrera;
@@ -99,6 +100,13 @@ class AlumnosController extends BaseController
         $errores = [];
         foreach ($v->validate($datos) as $mensaje) {
             $errores[] = $mensaje->getMessage();
+        }
+
+        if ($errNom = InputValidator::validarNombrePersona($datos['nombres'], 'nombres')) {
+            $errores[] = $errNom;
+        }
+        if ($errApe = InputValidator::validarNombrePersona($datos['apellidos'], 'apellidos')) {
+            $errores[] = $errApe;
         }
 
         if ($datos['fecha_nacimiento'] !== '' && strtotime($datos['fecha_nacimiento']) >= time()) {
@@ -362,6 +370,13 @@ class AlumnosController extends BaseController
 
         foreach ($v->validate($datos) as $mensaje) {
             $errores[] = $mensaje->getMessage();
+        }
+
+        if ($errNom = InputValidator::validarNombrePersona($datos['nombres'], 'nombres')) {
+            $errores[] = $errNom;
+        }
+        if ($errApe = InputValidator::validarNombrePersona($datos['apellidos'], 'apellidos')) {
+            $errores[] = $errApe;
         }
 
         if ($datos['fecha_nacimiento'] !== '' && strtotime($datos['fecha_nacimiento']) >= time()) {

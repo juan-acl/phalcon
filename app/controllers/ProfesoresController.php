@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Library\Security\InputValidator;
 use App\Models\Clase;
 use App\Models\Profesor;
 use App\Models\Usuario;
@@ -42,6 +43,16 @@ class ProfesoresController extends BaseController
         if ($apellidos === '') { $errores[] = 'Los apellidos son obligatorios'; }
         if ($usuarioNom === '') { $errores[] = 'El nombre de usuario es obligatorio'; }
         if (strlen($password) < 8) { $errores[] = 'La contraseña debe contener al menos 8 caracteres'; }
+
+        if ($errNom = InputValidator::validarNombrePersona($nombres, 'nombres')) {
+            $errores[] = $errNom;
+        }
+        if ($errApe = InputValidator::validarNombrePersona($apellidos, 'apellidos')) {
+            $errores[] = $errApe;
+        }
+        if ($errUsr = InputValidator::validarUsuario($usuarioNom)) {
+            $errores[] = $errUsr;
+        }
 
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errores[] = 'El formato del correo electrónico es inválido';
@@ -169,6 +180,13 @@ class ProfesoresController extends BaseController
         $errores = [];
         if ($nombres === '')   { $errores[] = 'Los nombres son obligatorios'; }
         if ($apellidos === '') { $errores[] = 'Los apellidos son obligatorios'; }
+
+        if ($errNom = InputValidator::validarNombrePersona($nombres, 'nombres')) {
+            $errores[] = $errNom;
+        }
+        if ($errApe = InputValidator::validarNombrePersona($apellidos, 'apellidos')) {
+            $errores[] = $errApe;
+        }
 
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errores[] = 'El formato del correo electrónico es inválido (ejemplo: docente@escuela.edu)';

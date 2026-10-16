@@ -22,11 +22,11 @@
           <div class="row g-3 mb-3">
             <div class="col-sm-6">
               <label for="nombres" class="form-label fw-semibold">Nombres <span class="text-danger">*</span></label>
-              <input type="text" name="nombres" id="nombres" class="form-control" value="{{ old['nombres']|default('')|e }}" required autofocus>
+              <input type="text" name="nombres" id="nombres" class="form-control" pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$" title="Solo letras y espacios, sin números ni caracteres especiales" value="{{ old['nombres']|default('')|e }}" required autofocus>
             </div>
             <div class="col-sm-6">
               <label for="apellidos" class="form-label fw-semibold">Apellidos <span class="text-danger">*</span></label>
-              <input type="text" name="apellidos" id="apellidos" class="form-control" value="{{ old['apellidos']|default('')|e }}" required>
+              <input type="text" name="apellidos" id="apellidos" class="form-control" pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$" title="Solo letras y espacios, sin números ni caracteres especiales" value="{{ old['apellidos']|default('')|e }}" required>
             </div>
           </div>
 
@@ -40,7 +40,7 @@
 
           <div class="mb-3">
             <label for="usuario" class="form-label fw-semibold">Nombre de Usuario <span class="text-danger">*</span></label>
-            <input type="text" name="usuario" id="usuario" class="form-control" value="{{ old['usuario']|default('')|e }}" required>
+            <input type="text" name="usuario" id="usuario" class="form-control" pattern="^[A-Za-z0-9._-]+$" title="Solo letras, números, puntos y guiones sin espacios" value="{{ old['usuario']|default('')|e }}" required>
           </div>
 
           <div class="mb-4">

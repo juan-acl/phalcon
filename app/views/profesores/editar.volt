@@ -22,11 +22,11 @@
           <div class="row g-3 mb-3">
             <div class="col-sm-6">
               <label for="nombres" class="form-label fw-semibold">Nombres <span class="text-danger">*</span></label>
-              <input type="text" name="nombres" id="nombres" class="form-control" value="{{ old['nombres']|default(profesor.nombres)|e }}" required autofocus>
+              <input type="text" name="nombres" id="nombres" class="form-control" pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$" title="Solo letras y espacios, sin números ni caracteres especiales" value="{{ old['nombres']|default(profesor.nombres)|e }}" required autofocus>
             </div>
             <div class="col-sm-6">
               <label for="apellidos" class="form-label fw-semibold">Apellidos <span class="text-danger">*</span></label>
-              <input type="text" name="apellidos" id="apellidos" class="form-control" value="{{ old['apellidos']|default(profesor.apellidos)|e }}" required>
+              <input type="text" name="apellidos" id="apellidos" class="form-control" pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$" title="Solo letras y espacios, sin números ni caracteres especiales" value="{{ old['apellidos']|default(profesor.apellidos)|e }}" required>
             </div>
           </div>
 

@@ -32,6 +32,8 @@
                      name="nombres"
                      id="nombres"
                      maxlength="100"
+                     pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$"
+                     title="Solo se permiten letras y espacios, sin números ni caracteres especiales"
                      class="form-control"
                      value="{{ old['nombres']|default(alumno.nombres)|e }}"
                      required>
@@ -43,6 +45,8 @@
                      name="apellidos"
                      id="apellidos"
                      maxlength="100"
+                     pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$"
+                     title="Solo se permiten letras y espacios, sin números ni caracteres especiales"
                      class="form-control"
                      value="{{ old['apellidos']|default(alumno.apellidos)|e }}"
                      required>
@@ -81,8 +85,8 @@
                      name="foto"
                      id="foto"
                      class="form-control"
-                     accept="image/jpeg,image/png">
-              <div class="form-text">Dejar vacío si no deseas cambiar la foto actual. Formatos: JPG, PNG (máx. 2 MB).</div>
+                     accept="image/jpeg,image/png,image/webp">
+              <div class="form-text">Dejar vacío si no deseas cambiar la foto actual. Formatos: JPG, PNG, WEBP (máximo 5 MB).</div>
             </div>
           </div>
 

@@ -32,6 +32,8 @@
                      name="nombres"
                      id="nombres"
                      maxlength="100"
+                     pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$"
+                     title="Solo se permiten letras y espacios, sin números ni caracteres especiales"
                      class="form-control"
                      value="{{ old['nombres']|default('')|e }}"
                      placeholder="Ej. Juan Carlos"
@@ -45,6 +47,8 @@
                      name="apellidos"
                      id="apellidos"
                      maxlength="100"
+                     pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑüÜ\s\'.\-]+$"
+                     title="Solo se permiten letras y espacios, sin números ni caracteres especiales"
                      class="form-control"
                      value="{{ old['apellidos']|default('')|e }}"
                      placeholder="Ej. Pérez Gómez"
@@ -74,13 +78,13 @@
             </div>
 
             <div class="col-12">
-              <label for="foto" class="form-label fw-semibold">Fotografía del Alumno (JPG o PNG, máx. 2 MB)</label>
+              <label for="foto" class="form-label fw-semibold">Fotografía del Alumno (JPG, PNG o WEBP, máx. 5 MB)</label>
               <input type="file"
                      name="foto"
                      id="foto"
                      class="form-control"
-                     accept="image/jpeg,image/png">
-              <div class="form-text">Opcional. Formatos permitidos: JPG, PNG.</div>
+                     accept="image/jpeg,image/png,image/webp">
+              <div class="form-text">Opcional. Formatos permitidos: JPG, PNG, WEBP (máximo 5 MB).</div>
             </div>
           </div>
 
