@@ -73,8 +73,8 @@ class ReportesExportTest extends HttpTestCase
         $cuerpo = (string) $r->getBody();
         // BOM UTF-8
         $this->assertStringStartsWith("\xEF\xBB\xBF", $cuerpo, 'El CSV debe incluir BOM UTF-8');
-        // Separador punto y coma
-        $this->assertStringContainsString(';', $cuerpo, 'El CSV debe usar separador punto y coma (;)');
+        // Separador coma (,) estándar RFC 4180
+        $this->assertStringContainsString(',', $cuerpo, 'El CSV debe usar separador coma (,)');
         $this->assertStringContainsString('Computación', $cuerpo);
         $this->assertStringContainsString('López', $cuerpo);
         $this->assertStringNotContainsString('Electricidad', $cuerpo, 'No debe incluir alumnos de otras carreras filtradas');
@@ -114,7 +114,7 @@ class ReportesExportTest extends HttpTestCase
         $this->assertStringContainsString('text/csv', $r->getHeaderLine('Content-Type'));
         $cuerpo = (string) $r->getBody();
         $this->assertStringStartsWith("\xEF\xBB\xBF", $cuerpo);
-        $this->assertStringContainsString(';', $cuerpo);
+        $this->assertStringContainsString(',', $cuerpo);
         $this->assertStringContainsString('Matemática', $cuerpo);
         $this->assertStringContainsString('Aprobado', $cuerpo);
     }

@@ -12,7 +12,7 @@ use Phalcon\Http\Response;
  * Servicio centralizado para la exportación de reportes a PDF y CSV.
  * Aplica configuración estricta de seguridad:
  * - PDF: sin peticiones remotas (SSRF), sin PHP embebido, chroot limitado a public/.
- * - CSV: UTF-8 con BOM, delimitador ';', protección contra inyección de fórmulas de hoja de cálculo.
+ * - CSV: UTF-8 con BOM, delimitador ',', protección contra inyección de fórmulas de hoja de cálculo.
  */
 class ExportService
 {
@@ -38,7 +38,7 @@ class ExportService
         $claves = $esAsociativo ? array_keys($columnas) : $columnas;
 
         // Escribir encabezados
-        fputcsv($fp, array_map([$this, 'sanitizarCeldaCsv'], $encabezados), ';');
+        fputcsv($fp, array_map([$this, 'sanitizarCeldaCsv'], $encabezados), ',');
 
         // Escribir filas
         foreach ($filas as $fila) {
@@ -47,7 +47,7 @@ class ExportService
                 $valor = $fila[$clave] ?? '';
                 $linea[] = $this->sanitizarCeldaCsv($valor);
             }
-            fputcsv($fp, $linea, ';');
+            fputcsv($fp, $linea, ',');
         }
 
         rewind($fp);
