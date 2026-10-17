@@ -73,7 +73,7 @@ Con `Phalcon\Filter\Validation` (PresenceOf, StringLength, Date, Numericality, B
 ## 10. Errores
 Páginas 404/403/401 genéricas (`ErrorController`); el detalle queda en `var/log/php-error.log`.
 
-## Reglas de seguridad para el agente (ya están en AGENTS.md)
+## Reglas de seguridad centrales
 Sin SQL concatenado · `|e` en Volt · CSRF en todo formulario · `assign` con lista blanca · subidas solo con `FotoUploader` · cambios de datos solo por POST.
 
 ## Checklist final antes de entregar

@@ -1,6 +1,6 @@
 # 08 — Guía Phalcon (equivalencias y patrones)
 
-Esta guía sirve para pasar lo hecho en Laravel a Phalcon y como referencia de código para el agente. Es un punto de partida: ante la duda, verificar en https://docs.phalcon.io (versión 5.x).
+Esta guía sirve para pasar lo hecho en Laravel a Phalcon y como referencia de código para el desarrollo. Es un punto de partida: ante la duda, verificar en https://docs.phalcon.io (versión 5.x).
 
 ## 1. Equivalencias Laravel → Phalcon
 | Laravel | Phalcon (este proyecto) |
@@ -37,7 +37,7 @@ Esta guía sirve para pasar lo hecho en Laravel a Phalcon y como referencia de c
   <tr><td>{{ a.nombres|e }}</td><td><a href="{{ url('alumnos/' ~ a.id) }}">Ver</a></td></tr>
 {% endfor %}
 ```
-En Volt la concatenación es `~`. Pedir al agente: "convierte estas vistas Blade a Volt siguiendo docs/08 y AGENTS.md".
+En Volt la concatenación es `~`. Para convertir vistas Blade a Volt se deben seguir las equivalencias de esta sección.
 
 ## 3. Controlador de referencia (patrón)
 ```php

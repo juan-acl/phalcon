@@ -208,7 +208,7 @@ class AtaquesTest extends HttpTestCase
         return array_map(fn($r) => [$r], [
             '/.htaccess', '/uploads/.htaccess', '/.env', '/.git/config', '/composer.json', '/composer.lock', '/phpunit.xml',
             '/app/config/config.php', '/app/config/config.local.php', '/database/schema.sql', '/database/seed.sql',
-            '/var/log/sql.log', '/var/log/php-error.log', '/cli/reset_db.php', '/AGENTS.md', '/docs/06-SEGURIDAD.md',
+            '/var/log/sql.log', '/var/log/php-error.log', '/cli/reset_db.php', '/docs/06-SEGURIDAD.md',
             '/%2e%2e/database/schema.sql', '/..%2fdatabase%2fschema.sql', '/%252e%252e/app/config/config.php',
             '/....//database/schema.sql', '/uploads/../../app/config/config.php', '/uploads/%2e%2e/%2e%2e/composer.json',
         ]);

@@ -1,6 +1,6 @@
-# 12 — Reportes avanzados, reglas de precisión y prompts para Codex
+# 12 — Reportes avanzados y reglas de precisión
 
-Objetivo: reportes precisos (mejores/peores notas, riesgo, estadísticas, profesores, auditoría), todos con pantalla + PDF + CSV, respetando roles. Codex lee `AGENTS.md` automáticamente; los prompts de la sección 5 asumen que ya existen `AGENTS.md`, `docs/10`, `docs/11` y el kit (ExportService, AccesoService, NotaService).
+Objetivo: reportes precisos (mejores/peores notas, riesgo, estadísticas, profesores, auditoría), todos con pantalla + PDF + CSV, respetando roles y el kit de servicios (ExportService, AccesoService, NotaService).
 
 ## 1. Lo obligatorio del enunciado (verificar primero)
 | Requisito | Estado esperado |

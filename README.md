@@ -36,4 +36,4 @@ En Apache (XAMPP) apuntar el DocumentRoot a la carpeta `public/` (el `.htaccess`
 - Si se publica con URL pública, activar el login: `AUTH_ENABLED=1`, `ADMIN_USER`, `ADMIN_PASS_HASH` (ver docs/06).
 
 ## Documentación
-Carpeta `docs/` y `AGENTS.md`.
+Carpeta `docs/`.
