@@ -64,11 +64,11 @@ class CuentaController extends BaseController
 
         $this->flashSession->success('Contraseña actualizada correctamente.');
 
-        if ($auth['rol'] === 'alumno' && !empty($auth['alumno_id'])) {
-            return $this->irA('alumnos/' . $auth['alumno_id'] . '/ficha');
+        if ($auth['rol'] === 'alumno') {
+            return $this->irA('mi/notas');
         }
         if ($auth['rol'] === 'profesor') {
-            return $this->irA('reportes/notas');
+            return $this->irA('profesor/clases');
         }
         return $this->irA('alumnos');
     }
