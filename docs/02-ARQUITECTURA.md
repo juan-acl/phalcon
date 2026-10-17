@@ -50,7 +50,7 @@ Volt: `{{ var|e }}`, `{% for x in lista %}`, `{% if %}`, `{{ url('ruta') }}`. Si
 
 ## ESTRUCTURA / SOPORTE
 ```
-AGENTS.md  README.md  docs/  scripts/auditoria.sh  tests/  composer.json (solo pruebas)
+README.md  docs/  scripts/auditoria.sh  tests/  composer.json (solo pruebas)
 var/cache/volt  var/log     Caché de plantillas y registros
 app/config/config.local.php Credenciales (NO versionar, NO incluir en el ZIP)
 ```

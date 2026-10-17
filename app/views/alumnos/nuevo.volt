@@ -77,6 +77,35 @@
               </select>
             </div>
 
+            <div class="col-12"><hr class="my-1"></div>
+
+            <div class="col-md-6">
+              <label for="usuario" class="form-label fw-semibold">Usuario de Acceso <span class="text-danger">*</span></label>
+              <input type="text"
+                     name="usuario"
+                     id="usuario"
+                     maxlength="60"
+                     class="form-control"
+                     value="{{ old['usuario']|default('')|e }}"
+                     placeholder="Ej. jperez"
+                     autocomplete="off"
+                     required>
+              <div class="form-text">Solo letras, números, puntos y guiones bajos.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="password" class="form-label fw-semibold">Contraseña Inicial <span class="text-danger">*</span></label>
+              <input type="password"
+                     name="password"
+                     id="password"
+                     minlength="8"
+                     class="form-control"
+                     placeholder="Mínimo 8 caracteres"
+                     autocomplete="new-password"
+                     required>
+              <div class="form-text">El alumno deberá cambiarla en su primer acceso.</div>
+            </div>
+
             <div class="col-12">
               <label for="foto" class="form-label fw-semibold">Fotografía del Alumno (JPG, PNG o WEBP, máx. 5 MB)</label>
               <input type="file"

@@ -8,6 +8,7 @@ use App\Library\Uploads\FotoUploader;
 use App\Models\Alumno;
 use App\Models\Carrera;
 use App\Models\Nota;
+use App\Models\Usuario;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Date;
 use Phalcon\Filter\Validation\Validator\PresenceOf;
@@ -72,10 +73,12 @@ class AlumnosController extends BaseController
 
     public function crearAction()
     {
-        $rawNombres = $this->request->getPost('nombres');
+        $rawNombres   = $this->request->getPost('nombres');
         $rawApellidos = $this->request->getPost('apellidos');
-        $rawFecha = $this->request->getPost('fecha_nacimiento');
-        $rawCarrera = $this->request->getPost('carrera_id');
+        $rawFecha     = $this->request->getPost('fecha_nacimiento');
+        $rawCarrera   = $this->request->getPost('carrera_id');
+        $usuarioNom   = trim((string) $this->request->getPost('usuario', 'string', ''));
+        $password     = (string) $this->request->getPost('password', 'string', '');
 
         $errores = [];
         if (!is_string($rawNombres) || !is_string($rawApellidos) || !is_string($rawFecha)) {
@@ -87,6 +90,7 @@ class AlumnosController extends BaseController
             'apellidos'        => is_string($rawApellidos) ? trim($rawApellidos) : '',
             'fecha_nacimiento' => is_string($rawFecha) ? trim($rawFecha) : '',
             'carrera_id'       => is_numeric($rawCarrera) ? (int) $rawCarrera : 0,
+            'usuario'          => $usuarioNom,
         ];
 
         $v = new Validation();
@@ -109,6 +113,16 @@ class AlumnosController extends BaseController
             $errores[] = $errApe;
         }
 
+        if ($usuarioNom === '') {
+            $errores[] = 'El nombre de usuario es obligatorio';
+        } elseif ($errUsr = InputValidator::validarUsuario($usuarioNom)) {
+            $errores[] = $errUsr;
+        }
+
+        if (strlen($password) < 8) {
+            $errores[] = 'La contraseña debe contener al menos 8 caracteres';
+        }
+
         if ($datos['fecha_nacimiento'] !== '' && strtotime($datos['fecha_nacimiento']) >= time()) {
             $errores[] = 'La fecha de nacimiento debe ser pasada';
         }
@@ -119,6 +133,16 @@ class AlumnosController extends BaseController
         ]);
         if (!$carreraExiste) {
             $errores[] = 'Selecciona una carrera válida';
+        }
+
+        if ($usuarioNom !== '' && empty($errores)) {
+            $existeU = Usuario::findFirst([
+                'conditions' => 'usuario = :u:',
+                'bind'       => ['u' => $usuarioNom],
+            ]);
+            if ($existeU) {
+                $errores[] = 'El nombre de usuario ya se encuentra registrado';
+            }
         }
 
         // Subida de fotografía (opcional)
@@ -146,12 +170,15 @@ class AlumnosController extends BaseController
             return;
         }
 
-        $alumno = new Alumno();
-        $alumno->assign($datos, ['nombres', 'apellidos', 'fecha_nacimiento', 'carrera_id']); // lista blanca
-        $alumno->foto = $rutaFoto;
-
+        $db = $this->di->get('db');
+        $db->begin();
         try {
+            $alumno = new Alumno();
+            $alumno->assign($datos, ['nombres', 'apellidos', 'fecha_nacimiento', 'carrera_id']);
+            $alumno->foto = $rutaFoto;
+
             if (!$alumno->save()) {
+                $db->rollback();
                 if ($rutaFoto) {
                     $uploader->eliminar($rutaFoto);
                 }
@@ -164,7 +191,35 @@ class AlumnosController extends BaseController
                 $this->view->pick('alumnos/nuevo');
                 return;
             }
+
+            $usuario = new Usuario();
+            $usuario->assign([
+                'usuario'            => $usuarioNom,
+                'password_hash'      => password_hash($password, PASSWORD_DEFAULT),
+                'rol'                => 'alumno',
+                'alumno_id'          => (int) $alumno->id,
+                'activo'             => 1,
+                'debe_cambiar_clave' => 1,
+            ], ['usuario', 'password_hash', 'rol', 'alumno_id', 'activo', 'debe_cambiar_clave']);
+
+            if (!$usuario->save()) {
+                $db->rollback();
+                if ($rutaFoto) {
+                    $uploader->eliminar($rutaFoto);
+                }
+                $mensajes = array_map(fn($m) => $m->getMessage(), iterator_to_array($usuario->getMessages()));
+                if (empty($mensajes)) {
+                    $mensajes = ['No se pudo crear la cuenta de usuario para el alumno.'];
+                }
+                $this->conErrores($mensajes, $datos);
+                $this->view->setVar('carreras', Carrera::find(['order' => 'nombre ASC']));
+                $this->view->pick('alumnos/nuevo');
+                return;
+            }
+
+            $db->commit();
         } catch (\Throwable $e) {
+            $db->rollback();
             if ($rutaFoto) {
                 $uploader->eliminar($rutaFoto);
             }
@@ -175,7 +230,7 @@ class AlumnosController extends BaseController
             return;
         }
 
-        $this->flashSession->success('Alumno registrado correctamente.');
+        $this->flashSession->success('Alumno y usuario de acceso creados correctamente.');
         return $this->irA('alumnos');
     }
 

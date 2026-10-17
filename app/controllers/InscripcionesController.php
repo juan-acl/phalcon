@@ -5,12 +5,19 @@ namespace App\Controllers;
 use App\Models\Alumno;
 use App\Models\Clase;
 use App\Models\Inscripcion;
+use App\Models\Semestre;
 
 class InscripcionesController extends BaseController
 {
     public function indexAction(): void
     {
-        $claseId = (int) $this->request->getQuery('clase_id', 'int', 0);
+        $claseIdRaw   = $this->request->getQuery('clase_id', null, '');
+        $semestreIdRaw = $this->request->getQuery('semestre_id', null, '');
+        $q            = trim((string) $this->request->getQuery('q', null, ''));
+
+        $claseId    = is_numeric($claseIdRaw)    && (int) $claseIdRaw    > 0 ? (int) $claseIdRaw    : 0;
+        $semestreId = is_numeric($semestreIdRaw) && (int) $semestreIdRaw > 0 ? (int) $semestreIdRaw : 0;
+
         $conds = [];
         $binds = [];
 
@@ -26,11 +33,38 @@ class InscripcionesController extends BaseController
         }
 
         $inscripciones = Inscripcion::find($params);
-        $clases = Clase::find(['order' => 'semestre_id DESC, curso_id ASC']);
+
+        // Filtrar por alumno (búsqueda en memoria sobre los resultados ya obtenidos)
+        if ($q !== '') {
+            $qLower = mb_strtolower($q);
+            $filtradas = [];
+            foreach ($inscripciones as $insc) {
+                if ($insc->alumno) {
+                    $nombre = mb_strtolower($insc->alumno->getNombreCompleto());
+                    if (str_contains($nombre, $qLower)) {
+                        $filtradas[] = $insc;
+                    }
+                }
+            }
+            $inscripciones = $filtradas;
+        }
+
+        // Clases filtradas por semestre para el dropdown
+        $claseParams = ['order' => 'semestre_id DESC, curso_id ASC'];
+        if ($semestreId > 0) {
+            $claseParams['conditions'] = 'semestre_id = :sid:';
+            $claseParams['bind'] = ['sid' => $semestreId];
+        }
+
+        $clases    = Clase::find($claseParams);
+        $semestres = Semestre::find(['order' => 'id DESC']);
 
         $this->view->setVar('inscripciones', $inscripciones);
         $this->view->setVar('clases', $clases);
+        $this->view->setVar('semestres', $semestres);
         $this->view->setVar('claseSeleccionada', $claseId);
+        $this->view->setVar('semestreSeleccionado', $semestreId);
+        $this->view->setVar('q', $q);
         $this->view->pick('inscripciones/index');
     }
 

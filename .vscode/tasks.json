@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar Servidor Web (Phalcon 8000)",
+      "type": "shell",
+      "command": "php -S 127.0.0.1:8000 -t public public/router.php",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Ejecutar Pruebas (PHPUnit)",
+      "type": "shell",
+      "command": "vendor\\bin\\phpunit",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

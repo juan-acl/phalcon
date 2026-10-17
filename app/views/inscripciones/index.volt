@@ -10,25 +10,51 @@
 
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-body bg-light p-3">
-    <form method="get" action="{{ url('inscripciones') }}" class="row g-2 align-items-center">
-      <div class="col-auto">
-        <label for="filtro_clase" class="col-form-label fw-semibold small">Filtrar por Clase:</label>
+    <form method="get" action="{{ url('inscripciones') }}" class="row g-2 align-items-end">
+
+      <div class="col-md-3">
+        <label for="filtro_semestre" class="form-label fw-semibold small mb-1">Semestre:</label>
+        <select name="semestre_id" id="filtro_semestre" class="form-select form-select-sm" onchange="document.getElementById('filtro_clase').value='';this.form.submit()">
+          <option value="">-- Todos --</option>
+          {% for sem in semestres %}
+            <option value="{{ sem.id }}" {% if semestreSeleccionado == sem.id %}selected{% endif %}>
+              {{ sem.nombre|e }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
-      <div class="col-md-6 col-lg-5">
+
+      <div class="col-md-4">
+        <label for="filtro_clase" class="form-label fw-semibold small mb-1">Clase:</label>
         <select name="clase_id" id="filtro_clase" class="form-select form-select-sm" onchange="this.form.submit()">
           <option value="">-- Todas las clases --</option>
           {% for cl in clases %}
-            <option value="{{ cl.id|e }}" {% if claseSeleccionada == cl.id %}selected{% endif %}>
+            <option value="{{ cl.id }}" {% if claseSeleccionada == cl.id %}selected{% endif %}>
               {{ cl.curso ? cl.curso.nombre|e : '' }} (Sec. {{ cl.seccion ? cl.seccion.nombre|e : '' }}) - {{ cl.semestre ? cl.semestre.nombre|e : '' }}
             </option>
           {% endfor %}
         </select>
       </div>
-      {% if claseSeleccionada %}
-        <div class="col-auto">
-          <a href="{{ url('inscripciones') }}" class="btn btn-sm btn-outline-secondary">Limpiar Filtro</a>
+
+      <div class="col-md-4">
+        <label for="filtro_q" class="form-label fw-semibold small mb-1">Buscar alumno:</label>
+        <div class="input-group input-group-sm">
+          <input type="text" name="q" id="filtro_q" class="form-control form-control-sm"
+                 placeholder="Nombre o apellido…" value="{{ q|e }}">
+          <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+
+      {% if claseSeleccionada or semestreSeleccionado or q %}
+        <div class="col-auto align-self-end">
+          <a href="{{ url('inscripciones') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle me-1"></i>Limpiar
+          </a>
         </div>
       {% endif %}
+
     </form>
   </div>
 </div>
